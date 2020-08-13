@@ -25,7 +25,7 @@ class CredentialsFactory implements FactoryInterface
             /**
              * @var Connection $dbal
              */
-            $dbal = $container->get('dbalConnection');
+            $dbal = $container->get('dbal_connection');
             if ($dbal->getSchemaManager()->tablesExist([$credentialsTable])) {
                 $sql = sprintf('SELECT user, password FROM %s WHERE type = \'%s\'', $credentialsTable, $this->mode);
                 $credentials = $dbal->query($sql)->fetchAll();
@@ -35,8 +35,7 @@ class CredentialsFactory implements FactoryInterface
 
                     $log = MxcDropshipIntegrator::getServices()->get('logger');
                     $mode = strtoupper($this->mode);
-                    $log->info('***** ' . $mode . ' MODE ****');
-                    $log->info('user: ' . $user);
+                    $log->info(sprintf("***** %s MODE, USER: %s ****", $mode, $user));
                 }
             }
         }

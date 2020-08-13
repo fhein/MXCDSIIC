@@ -31,7 +31,7 @@ class BackendOrderSubscriber implements SubscriberInterface
     public function __construct()
     {
         $this->services = MxcDropshipIntegrator::getServices();
-        $this->modelManager = $this->services->get('modelManager');
+        $this->modelManager = $this->services->get('models');
     }
 
     /**

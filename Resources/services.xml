@@ -1,0 +1,53 @@
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <service id="mxc_dropship_innocigs.subscriber.templates"
+                 class="MxcDropshipInnocigs\Subscribers\TemplateRegistration">
+            <argument>%mxc_dropship_integrator.plugin_dir%</argument>
+            <argument type="service" id="template"/>
+            <tag name="shopware.event_subscriber"/>
+        </service>
+
+        <service id="mxc_dropship_innocigs.subscriber.backendarticle"
+                 class="MxcDropshipInnocigs\Subscribers\BackendArticleSubscriber">
+            <tag name="shopware.event_subscriber"/>
+        </service>
+
+        <service id="mxc_dropship_innocigs.subscriber.backendorder"
+                 class="MxcDropshipInnocigs\Subscribers\BackendOrderSubscriber">
+            <tag name="shopware.event_subscriber"/>
+        </service>
+
+        <service id="mxc_dropship_innocigs.cronjob.import"
+                 class="MxcDropshipInnocigs\Cronjobs\ImportCronJob">
+            <tag name="shopware.event_subscriber"/>
+        </service>
+
+        <service id="mxc_dropship_innocigs.cronjob.price_update"
+                 class="MxcDropshipInnocigs\Cronjobs\PriceUpdateCronJob">
+            <tag name="shopware.event_subscriber"/>
+        </service>
+
+        <service id="mxc_dropship_innocigs.cronjob.tracking_data_update"
+                 class="MxcDropshipInnocigs\Cronjobs\TrackingDataUpdateCronJob">
+            <tag name="shopware.event_subscriber"/>
+        </service>
+
+        <service id="mxc_dropship_innocigs.cronjob.stock_update"
+                 class="MxcDropshipInnocigs\Cronjobs\StockUpdateCronJob">
+            <tag name="shopware.event_subscriber"/>
+        </service>
+
+        <service id="mxc_dropship_innocigs.command.import"
+                class="MxcDropshipInnocigs\Commands\ImportCommand">
+            <tag name="console.command" command="mxcdsi:import"/>
+        </service>
+
+        <service id="mxc_dropship_integrator.command.stock_update"
+                class="MxcDropshipInnocigs\Commands\StockUpdateCommand">
+            <tag name="console.command" command="mxcdsi:stockupdate"/>
+        </service>
+    </services>
+</container>

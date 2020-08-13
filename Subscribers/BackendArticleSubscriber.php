@@ -9,7 +9,6 @@ use Enlight\Event\SubscriberInterface;
 use Enlight_Event_EventArgs;
 use Enlight_Template_Manager;
 use MxcDropshipInnocigs\Services\ArticleRegistry;
-use MxcDropshipInnocigs\Models\ArticleAttributes;
 use MxcDropshipIntegrator\MxcDropshipIntegrator;        // @todo: Gegenseitige Abhängigkeit der Module
 
 class BackendArticleSubscriber implements SubscriberInterface
@@ -24,7 +23,7 @@ class BackendArticleSubscriber implements SubscriberInterface
      */
     private $templateManager;
 
-    private $basePath = 'backend/mxc_dsi_dropship/innocigs/';
+    private $basePath = 'backend/mxc_dropship_innocigs';
     
     private $registry = null;
     private $services;
@@ -65,7 +64,7 @@ class BackendArticleSubscriber implements SubscriberInterface
 
         if ($actionName === 'load') {
 
-            $view->extendsTemplate($this->basePath . 'article/model/detail.js');
+            $view->extendsTemplate($this->basePath . 'article/model/detail.js.sn');
             $view->extendsTemplate($this->basePath . 'article/view/detail/window.js');
             $view->extendsTemplate($this->basePath . 'article/view/detail/base.js');
 

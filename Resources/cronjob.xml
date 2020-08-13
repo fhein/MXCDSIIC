@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cronjobs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/5.3/engine/Shopware/Components/Plugin/schema/cronjob.xsd">
+
+    <cronjob>
+        <name>InnoCigs Import</name>
+        <action>Shopware_CronJob_MxcInnocigsImport</action>
+        <active>false</active>
+        <interval>86400</interval>
+        <disableOnError>true</disableOnError>
+    </cronjob>
+    <cronjob>
+        <name>InnoCigs Bestandsaktualisierung</name>
+        <action>Shopware_CronJob_MxcInnocigsStockUpdate</action>
+        <active>true</active>
+        <interval>1200</interval>
+        <disableOnError>false</disableOnError>
+    </cronjob>
+    <cronjob>
+        <name>InnoCigs Preisaktualisierung</name>
+        <action>Shopware_CronJob_MxcInnocigsPriceUpdate</action>
+        <active>true</active>
+        <interval>14400</interval>
+        <disableOnError>false</disableOnError>
+    </cronjob>
+    <cronjob>
+        <name>InnoCigs Sendungsverfolgung</name>
+        <action>Shopware_CronJob_MxcInnocigsTrackingDataUpdate</action>
+        <active>true</active>
+        <interval>300</interval>
+        <disableOnError>false</disableOnError>
+    </cronjob>
+
+</cronjobs>

@@ -5,6 +5,7 @@ namespace MxcDropshipInnocigs\Services;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use MxcCommons\Plugin\Database\SchemaManager;
+use MxcCommons\Defines\Constants;
 use MxcCommons\Plugin\Service\ClassConfigAwareInterface;
 use MxcCommons\Plugin\Service\ClassConfigAwareTrait;
 use MxcCommons\Plugin\Service\LoggerAwareInterface;
@@ -180,11 +181,11 @@ class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelM
         $options = [];
         foreach ($attributes as $group => $option) {
             $option = trim($option);
-            $options[] = trim($group) . MxcDropshipIntegrator::MXC_DELIMITER_L1 . $option;
+            $options[] = trim($group) . Constants::DELIMITER_L1 . $option;
             $this->optionNames[$option] = true;
         }
         sort($options);
-        return implode(MxcDropshipIntegrator::MXC_DELIMITER_L2, $options);
+        return implode(Constants::DELIMITER_L2, $options);
     }
 
     protected function flattenImages(?string $image, array $addlImages)
@@ -196,7 +197,7 @@ class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelM
         }
         // array_filter removes false strings (empty strings in this case)
         // arraykeys(array_flip) does the same as array_unique but is faster
-        return implode(MxcDropshipIntegrator::MXC_DELIMITER_L1, array_keys(array_flip(array_filter($images))));
+        return implode(Constants::DELIMITER_L1, array_keys(array_flip(array_filter($images))));
     }
 
     protected function updateModels()
@@ -313,9 +314,9 @@ class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelM
         foreach ($records as $number => $data) {
             $model = $models[$number];
             $options = $model->getOptions();
-            $options = explode(MxcDropshipIntegrator::MXC_DELIMITER_L2, $options);
+            $options = explode(Constants::DELIMITER_L2, $options);
             foreach ($options as $fullOption) {
-                [$group, $option] = explode(MxcDropshipIntegrator::MXC_DELIMITER_L1, $fullOption);
+                [$group, $option] = explode(Constants::DELIMITER_L1, $fullOption);
                 $groups[$group][$option] = $fullOption;
             }
         }
@@ -339,7 +340,7 @@ class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelM
 
             $set = [];
             foreach ($product as $value) {
-                $set[implode(MxcDropshipIntegrator::MXC_DELIMITER_L2, $value)] = true;
+                $set[implode(Constants::DELIMITER_L2, $value)] = true;
             }
 
             foreach ($records as $number => $data) {
