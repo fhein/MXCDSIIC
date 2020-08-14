@@ -8,9 +8,11 @@ use DateTime;
 use DateTimeInterface;
 use Enlight\Event\SubscriberInterface;
 use MxcCommons\Plugin\Service\LoggerInterface;
-use MxcDropshipIntegrator\Dropship\SupplierRegistry;
+use MxcCommons\Toolbox\Strings\StringTool;
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
+use MxcDropshipInnocigs\Services\ApiClient;
+use MxcDropshipInnocigs\Services\ArticleRegistry;
 use MxcDropshipIntegrator\Models\Product;
-use MxcDropshipIntegrator\MxcDropshipIntegrator;
 use MxcCommons\Toolbox\Shopware\ArticleTool;
 use Shopware\Models\Article\Article;
 use Shopware\Models\Article\Detail;
@@ -34,10 +36,10 @@ class StockUpdateCronJob implements SubscriberInterface
 
     public function onStockUpdate(/** @noinspection PhpUnusedParameterInspection */ $job)
     {
-        $services = MxcDropshipIntegrator::getServices();
+        $services = MxcDropshipInnocigs::getServices();
         /** @var LoggerInterface $log */
         $this->log = $services->get('logger');
-        $this->modelManager = Shopware()->Models();
+        $this->modelManager = $services->get('models');
         $result = true;
 
         if (! $this->isCompanionInstalled()) {
@@ -179,56 +181,45 @@ class StockUpdateCronJob implements SubscriberInterface
     protected function updateStockInfo()
     {
         /** @var ApiClient $apiClient */
-        $registry = MxcDropshipIntegrator::getServices()->get(SupplierRegistry::class);
-        $apiClient = $registry->getService(SupplierRegistry::SUPPLIER_INNOCIGS, 'ApiClient');
+        $services = MxcDropshipInnocigs::getServices();
+        $apiClient = $services->get(ApiClient::class);
+        /** @var ArticleRegistry $registry */
+        $registry = $services->get(ArticleRegistry::class);
 
         $info = $apiClient->getItemList(true, false);
         $stockInfo = $apiClient->getAllStockInfo();
-        $dropshipInfoRepository = $this->modelManager->getRepository(ArticleAttributes::class);
-
-
         $details = $this->modelManager->getRepository(Detail::class)->findAll();
 
         /** @var Detail $detail */
         foreach ($details as $detail) {
-            $dropshipInfoId = ArticleTool::getDetailAttribute($detail, 'mxc_dsi_innocigs');
-            if ($dropshipInfoId === null) continue;
-
-            /** @var ArticleAttributes $dropshipInfo */
-            $dropshipInfo = $dropshipInfoRepository->find($dropshipInfoId);
-            if ($dropshipInfo === null) {
-                // this is an error condition, there should always be an info record, if infoId is set
-                // @todo: For now we silently ignore this error
-                continue;
-            }
-
-            $productNumber = $dropshipInfo->getProductNumber();
+            $detailId = $detail->getId();
+            $settings = $registry->getSettings($detailId);
+            $productNumber = $settings['mxc_dsi_ic_productnumber'];
+            if (empty($productNumber)) continue;
             if ($info[$productNumber] === null) continue;
 
             // record from InnoCigs available
-            $purchasePrice = $this->toFloat($info[$productNumber]['purchasePrice']);
-            $retailPrice = $this->toFloat($info[$productNumber]['recommendedRetailPrice']);
+            $purchasePrice = StringTool::toFloat($info[$productNumber]['purchasePrice']);
+            $retailPrice = StringTool::tofloat($info[$productNumber]['recommendedRetailPrice']);
             $instock = intval($stockInfo[$productNumber] ?? 0);
 
             // vapee dropship attributes
-            $dropshipInfo->setPurchasePrice($purchasePrice);
-            $dropshipInfo->setRecommendedRetailPrice($retailPrice);
-            $dropshipInfo->setInstock($instock);
+            $settings['mxc_dsi_ic_purchaseprice'] = $purchasePrice;
+            $settings['mxc_dsi_ic_retailprice'] = $retailPrice;
+            $settings['mxc_dsi_ic_instock'] = $instock;
+            $registry->updateSettings($detailId, $settings);
 
-            // $this->log->debug('Updated stock info for ' . $productNumber);
+            // For now we override shopware's purchase price @todo: Configurable?
+            $detail->setPurchasePrice($purchasePrice);
 
             // dropshippers companion attributes (legacy dropship support)
-            if ($this->isCompanionInstalled()) {
-                ArticleTool::setDetailAttribute($detail, 'dc_ic_purchasing_price', $info[$productNumber]['purchasePrice']);
-                ArticleTool::setDetailAttribute($detail, 'dc_ic_retail_price', $info[$productNumber]['recommendedRetailPrice']);
-                ArticleTool::setDetailAttribute($detail, 'dc_ic_instock', $instock);
-            }
+            if (! $this->isCompanionInstalled()) continue;
 
-            // For now we override shopware's purchase price
-            // @todo: Configurable?
-            $detail->setPurchasePrice($purchasePrice);
+            ArticleTool::setDetailAttribute($detail, 'dc_ic_purchasing_price', $info[$productNumber]['purchasePrice']);
+            ArticleTool::setDetailAttribute($detail, 'dc_ic_retail_price', $info[$productNumber]['recommendedRetailPrice']);
+            ArticleTool::setDetailAttribute($detail, 'dc_ic_instock', $instock);
+
         }
-        $this->modelManager->flush();
     }
 
     protected function isCompanionInstalled() {
@@ -236,9 +227,5 @@ class StockUpdateCronJob implements SubscriberInterface
             $this->companionPresent = (null != $this->modelManager->getRepository(Plugin::class)->findOneBy(['name' => 'wundeDcInnoCigs']));
         }
         return $this->companionPresent;
-    }
-
-    protected function toFloat(string $floatString) {
-        return floatval(str_replace(',', '.', $floatString));
     }
 }

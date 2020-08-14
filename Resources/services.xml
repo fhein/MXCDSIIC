@@ -5,7 +5,7 @@
     <services>
         <service id="mxc_dropship_innocigs.subscriber.templates"
                  class="MxcDropshipInnocigs\Subscribers\TemplateRegistration">
-            <argument>%mxc_dropship_integrator.plugin_dir%</argument>
+            <argument>%mxc_dropship_innocigs.plugin_dir%</argument>
             <argument type="service" id="template"/>
             <tag name="shopware.event_subscriber"/>
         </service>
@@ -45,7 +45,7 @@
             <tag name="console.command" command="mxcdsi:import"/>
         </service>
 
-        <service id="mxc_dropship_integrator.command.stock_update"
+        <service id="mxc_dropship_innocigs.command.stock_update"
                 class="MxcDropshipInnocigs\Commands\StockUpdateCommand">
             <tag name="console.command" command="mxcdsi:stockupdate"/>
         </service>

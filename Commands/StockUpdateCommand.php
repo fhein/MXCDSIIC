@@ -5,6 +5,7 @@ namespace MxcDropshipInnocigs\Commands;
 use Shopware\Commands\ShopwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
 
 
 class StockUpdateCommand extends ShopwareCommand

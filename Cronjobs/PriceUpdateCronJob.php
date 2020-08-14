@@ -6,8 +6,8 @@ namespace MxcDropshipInnocigs\Cronjobs;
 
 use Enlight\Event\SubscriberInterface;
 use MxcDropshipIntegrator\Jobs\ApplyPriceRules;
-use MxcDropshipIntegrator\Jobs\UpdateInnocigsPrices;
-use MxcDropshipIntegrator\MxcDropshipIntegrator;
+use MxcDropshipInnocigs\Jobs\UpdatePrices;
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use Throwable;
 
 class PriceUpdateCronJob implements SubscriberInterface
@@ -29,12 +29,12 @@ class PriceUpdateCronJob implements SubscriberInterface
     {
         $start = date('d-m-Y H:i:s');
 
-        $services = MxcDropshipIntegrator::getServices();
+        $services = MxcDropshipInnocigs::getServices();
         $log = $services->get('logger');
         $result = true;
 
         try {
-            UpdateInnocigsPrices::run();
+            UpdatePrices::run();
             ApplyPriceRules::run();
         } catch (Throwable $e) {
             $result = false;

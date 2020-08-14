@@ -9,7 +9,7 @@ use Enlight\Event\SubscriberInterface;
 use Enlight_Event_EventArgs;
 use Enlight_Template_Manager;
 use MxcDropshipInnocigs\Services\ArticleRegistry;
-use MxcDropshipIntegrator\MxcDropshipIntegrator;        // @todo: Gegenseitige Abhängigkeit der Module
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 
 class BackendArticleSubscriber implements SubscriberInterface
 {
@@ -31,7 +31,7 @@ class BackendArticleSubscriber implements SubscriberInterface
 
     public function __construct()
     {
-        $this->services = MxcDropshipIntegrator::getServices();
+        $this->services = MxcDropshipInnocigs::getServices();
         $this->log = $this->services->get('logger');
     }
 
@@ -44,12 +44,25 @@ class BackendArticleSubscriber implements SubscriberInterface
 //            'Enlight_Controller_Action_PostDispatchSecure_Backend_Article' => 'onBackendArticlePostDispatch',
 //            'Enlight_Controller_Action_PostDispatch_Backend_ArticleList' => 'onBackendArticleListPostDispatch',
 //            'Enlight_Controller_Dispatcher_ControllerPath_Backend_MxcDsiArticleInnocigs' => 'onGetControllerPathMxcDsiArticleInnocigs',
+//            'Shopware_Controllers_Frontend_Detail::indexAction::after' => 'onFrontendDetailIndexAfter',
+//            'Enlight_Bootstrap_AfterInitResource_shopware_storefront.list_product_service' => 'onFrontendDecorateListProduct',
+
         ];
     }
 
+    public function onFrontendDecorateListProduct(Enlight_Event_EventArgs $args)
+    {
+
+    }
+
+     public function onFrontendDetailIndexAfter(Enlight_Event_EventArgs $args)
+     {
+
+     }
+
     public function onGetControllerBackendPathMxcDsiArticleInnocigs(Enlight_Event_EventArgs $args) {
 
-        return MxcDropshipIntegrator::PLUGIN_DIR . '/Controllers/Backend/MxcDsiArticleInnocigs.php';
+        return MxcDropshipInnocigs::PLUGIN_DIR . '/Controllers/Backend/MxcDsiArticleInnocigs.php';
     }
 
     /**
@@ -150,7 +163,6 @@ class BackendArticleSubscriber implements SubscriberInterface
     }
 
     protected function getArticleListDecoration(int $detailId) {
-        /** @var ArticleAttributes $settings */
         $settings = $this->getRegistry()->getSettings($detailId);
         if ($settings === false) return null;
         $this->log->debug(var_export($settings, true));

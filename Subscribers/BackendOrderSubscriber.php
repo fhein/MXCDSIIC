@@ -12,9 +12,7 @@ use Enlight\Event\SubscriberInterface;
 use Enlight_Event_EventArgs;
 use Enlight_Template_Manager;
 use MxcDropshipInnocigs\Services\ArticleRegistry;
-use MxcDropshipInnocigs\Models\ArticleAttributes;
-use MxcDropshipInnocigs\Models\OrderDetailAttributes;
-use MxcDropshipIntegrator\MxcDropshipIntegrator;        // @todo: Gegenseitige Abhängigkeit der Module
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use Shopware\Models\Article\Article;
 use Shopware\Models\Article\Detail;
 use Throwable;
@@ -30,7 +28,7 @@ class BackendOrderSubscriber implements SubscriberInterface
 
     public function __construct()
     {
-        $this->services = MxcDropshipIntegrator::getServices();
+        $this->services = MxcDropshipInnocigs::getServices();
         $this->modelManager = $this->services->get('models');
     }
 

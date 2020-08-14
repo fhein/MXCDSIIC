@@ -2,7 +2,7 @@
 
 namespace MxcDropshipInnocigs\Models;
 
-use MxcDropshipIntegrator\Models\BaseEntityRepository;
+use MxcCommons\Toolbox\Models\BaseEntityRepository;
 
 class ModelRepository extends BaseEntityRepository
 {

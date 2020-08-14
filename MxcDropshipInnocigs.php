@@ -12,10 +12,6 @@ class MxcDropshipInnocigs extends Plugin {
     protected $activateClearCache = ActivateContext::CACHE_LIST_ALL;
     protected $uninstallClearCache = UninstallContext::CACHE_LIST_ALL;
 
-    public const MXC_DELIMITER_L1 = '#!#';
-    public const MXC_DELIMITER_L2 = '##!##';
-    public const MXC_PATH_DELIMITER = '>';
-
     public const PLUGIN_DIR = __DIR__;
 
     private static $services;

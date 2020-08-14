@@ -4,7 +4,6 @@ namespace MxcDropshipInnocigs\Services;
 
 use MxcCommons\Plugin\Service\ClassConfigAwareInterface;
 use MxcCommons\Plugin\Service\ClassConfigAwareTrait;
-use MxcDropshipIntegrator\MxcDropshipIntegrator;        // @todo: Gegenseitige Abhängigkeit der Module
 use Shopware\Models\Country\Country;
 use Shopware\Models\Order\Order;
 use Shopware\Models\Order\Shipping;

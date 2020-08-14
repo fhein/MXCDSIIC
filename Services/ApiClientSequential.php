@@ -6,7 +6,7 @@ use DateTime;
 use DOMElement;
 use Exception;
 use MxcCommons\Plugin\Service\LoggerInterface;
-use MxcDropshipIntegrator\Exception\ApiException;
+use MxcDropshipInnocigs\Exception\ApiException;
 use XMLReader;
 
 //use DOMDocument;

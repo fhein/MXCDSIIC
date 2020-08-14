@@ -2,9 +2,8 @@
 
 namespace MxcDropshipInnocigs\Commands;
 
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use MxcDropshipInnocigs\Services\ImportClient;
-use MxcDropshipIntegrator\Dropship\SupplierRegistry;
-use MxcDropshipIntegrator\MxcDropshipIntegrator;
 use Shopware\Commands\ShopwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -40,8 +39,7 @@ EOF
         $output->writeln('<info>Importing products from InnoCigs ...</info>');
 
         try {
-            $registry = MxcDropshipIntegrator::getServices()->get(SupplierRegistry::class);
-            $importClient = $registry->getService(SupplierRegistry::SUPPLIER_INNOCIGS, 'ImportClient');
+            $importClient = MxcDropshipInnocigs::getServices()->get(ImportClient::class);
             $importClient->import(true);
         } catch (Throwable $e) {
             $output->writeln('<merror>' . $e->getMessage() . '</merror>');

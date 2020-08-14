@@ -7,7 +7,7 @@ use DOMDocument;
 use DOMElement;
 use Exception;
 use MxcCommons\Plugin\Service\LoggerInterface;
-use MxcDropshipIntegrator\Exception\ApiException;
+use MxcDropshipInnocigs\Exception\ApiException;
 use MxcCommons\Http\Client;
 use MxcCommons\Http\Exception\RuntimeException as ZendClientException;
 use MxcCommons\Http\Response;

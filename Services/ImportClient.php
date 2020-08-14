@@ -12,12 +12,10 @@ use MxcCommons\Plugin\Service\LoggerAwareInterface;
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\Plugin\Service\ModelManagerAwareInterface;
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
+use MxcCommons\Toolbox\Arrays\ArrayTool;
 use MxcDropshipInnocigs\Models\Model;
 use MxcDropshipIntegrator\Models\Variant;
-use MxcDropshipIntegrator\MxcDropshipIntegrator;        // @todo: Gegenseitige Abhängigkeit der Module
-use MxcDropshipIntegrator\Report\ArrayReport;
-use MxcCommons\Toolbox\Arrays\ArrayTool;
-use MxcDropshipInnocigs\Services\ApiClient;
+use MxcCommons\Toolbox\Report\ArrayReport;
 use RuntimeException;
 
 class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelManagerAwareInterface, LoggerAwareInterface
@@ -85,7 +83,6 @@ class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelM
     {
         $this->changeLog = [];
         $repository = $this->modelManager->getRepository(Variant::class);
-        /** @noinspection PhpUndefinedMethodInspection */
         $this->variants = $repository->getAllIndexed();
         $this->optionNames = [];
     }

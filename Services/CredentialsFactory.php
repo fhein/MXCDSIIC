@@ -4,17 +4,20 @@ namespace MxcDropshipInnocigs\Services;
 
 use Doctrine\DBAL\Connection;
 use MxcCommons\Interop\Container\ContainerInterface;
-use MxcDropshipIntegrator\MxcDropshipIntegrator;        // @todo: Gegenseitige Abhängigkeit der Module
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use MxcCommons\ServiceManager\Exception\ServiceNotCreatedException;
 use MxcCommons\ServiceManager\Factory\FactoryInterface;
 
 class CredentialsFactory implements FactoryInterface
 {
     private $mode = 'development';
-    //private $mode = 'production';
 
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
+        $contextService = Shopware()->Container()->get('shopware_storefront.context_service');
+        $host = $contextService->createShopContext(1)->getShop()->getHost();
+        if ($host === 'www.vapee.de') $this->mode = 'production';
+
         $config = $container->get('shopwareConfig');
         $user = $config->offsetGet('api_user');
         $password = null;
@@ -33,7 +36,7 @@ class CredentialsFactory implements FactoryInterface
                     $user = $credentials[0]['user'];
                     $password = $credentials[0]['password'];
 
-                    $log = MxcDropshipIntegrator::getServices()->get('logger');
+                    $log = MxcDropshipInnocigs::getServices()->get('logger');
                     $mode = strtoupper($this->mode);
                     $log->info(sprintf("***** %s MODE, USER: %s ****", $mode, $user));
                 }
