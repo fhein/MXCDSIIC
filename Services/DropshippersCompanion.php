@@ -32,23 +32,22 @@ class DropshippersCompanion implements ModelManagerAwareInterface, LoggerAwareIn
         $this->apiClient = $apiClient;
     }
 
-    public function configureDropship(Variant $variant, array $stockInfo, bool $active = true)
+    public function configureDropship(Variant $variant, int $stockInfo, bool $active = true)
     {
+        if (! $this->validate()) return;
+
         $detail = $variant->getDetail();
         if (! $detail) return;
 
-        if (! $this->validate()) return;
-
-        $attribute = $detail->getAttribute();
-
-        // @todo: $attribute null happens but it should not
-        if (! $attribute) return;
+//        // @todo: $attribute null happens but it should not
+//        $attribute = $detail->getAttribute();
+//        if (! $attribute) return;
 
         ArticleTool::setDetailAttribute($detail, 'dc_ic_ordernumber', $variant->getIcNumber());
         ArticleTool::setDetailAttribute($detail, 'dc_ic_articlename', $variant->getName());
         ArticleTool::setDetailAttribute($detail, 'dc_ic_purchasing_price', $variant->getPurchasePrice());
         ArticleTool::setDetailAttribute($detail, 'dc_ic_retail_price', $variant->getRecommendedRetailPrice());
-        ArticleTool::setDetailAttribute($detail, 'dc_ic_instock', $stockInfo[$variant->getIcNumber()] ?? 0);
+        ArticleTool::setDetailAttribute($detail, 'dc_ic_instock', $stockInfo);
         ArticleTool::setDetailAttribute($detail, 'dc_ic_active', $active);
     }
 

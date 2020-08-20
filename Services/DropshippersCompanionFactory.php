@@ -5,7 +5,6 @@ namespace MxcDropshipInnocigs\Services;
 use MxcCommons\Interop\Container\ContainerInterface;
 use MxcCommons\Plugin\Service\ObjectAugmentationTrait;
 use MxcCommons\ServiceManager\Factory\FactoryInterface;
-use MxcDropshipIntegrator\Dropship\SupplierRegistry;
 
 class DropshippersCompanionFactory implements FactoryInterface
 {
@@ -20,7 +19,6 @@ class DropshippersCompanionFactory implements FactoryInterface
      */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        /** @var SupplierRegistry $registry */
         $apiClient = $container->get(ApiClient::class);
         return $this->augment($container, new DropshippersCompanion($apiClient));
     }

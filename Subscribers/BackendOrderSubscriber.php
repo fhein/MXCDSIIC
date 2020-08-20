@@ -6,6 +6,7 @@
 namespace MxcDropshipInnocigs\Subscribers;
 
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Enlight\Event\SubscriberInterface;
@@ -15,6 +16,7 @@ use MxcDropshipInnocigs\Services\ArticleRegistry;
 use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use Shopware\Models\Article\Article;
 use Shopware\Models\Article\Detail;
+use Shopware\Models\Order\Order;
 use Throwable;
 use Zend_Db_Adapter_Exception;
 
@@ -38,12 +40,34 @@ class BackendOrderSubscriber implements SubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
+            Order::class . '::postPersist'   => 'onOrderPostPersist',
+            Order::class . '::postUpdate'    => 'onOrderPostUpdate',
 //            'Enlight_Controller_Action_PostDispatch_Backend_Order'          => 'onBackendOrderPostDispatch',
 //            'Shopware_Modules_Order_SaveOrder_ProcessDetails'               => 'onSaveOrderProcessDetails',
 //            'Shopware_Controllers_Backend_Order::savePositionAction::after' => 'onSavePositionActionAfter',
 //            'Shopware_Controllers_Backend_Order::saveAction::after'         => 'onSavePositionAfter',
 
         ];
+    }
+
+    public function onOrderPostPersist(LifecycleEventArgs $args)
+    {
+        $entity = $args->getObject();
+        $name = 'unknown';
+        if ($entity instanceof Order)
+        {
+            $name = 'Order';
+        }
+    }
+
+    public function onOrderPostUpdate(LifecycleEventArgs $args)
+    {
+        $entity = $args->getObject();
+        $name = 'unknown';
+        if ($entity instanceof Order)
+        {
+            $name = 'Order';
+        }
     }
 
     public function onBackendOrderPostDispatch(Enlight_Event_EventArgs $args)

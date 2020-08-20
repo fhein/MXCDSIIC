@@ -37,13 +37,14 @@ class PriceUpdateCronJob implements SubscriberInterface
             UpdatePrices::run();
             ApplyPriceRules::run();
         } catch (Throwable $e) {
+            $this->log->except($e, false, false);
             $result = false;
         }
         $resultMsg = $result === true ? '. Success.' : '. Failure.';
         $end = date('d-m-Y H:i:s');
         $msg = 'Update prices cronjob ran from ' . $start . ' to ' . $end . $resultMsg;
 
-        $result === true ? $log->info($msg) : $log->error($msg);
+        $result === true ? $log->info($msg) : $log->err($msg);
 
         return $result;
     }

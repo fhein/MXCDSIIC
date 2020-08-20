@@ -11,6 +11,7 @@ use MxcDropshipInnocigs\Services\Credentials;
 use MxcDropshipInnocigs\Services\DropshipOrder;
 use MxcDropshipInnocigs\Services\DropshippersCompanion;
 use MxcDropshipInnocigs\Services\ImportClient;
+use MxcDropshipInnocigs\Services\StockInfo;
 use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
 
 return [
@@ -65,6 +66,7 @@ return [
             Credentials::class,
             ImportClient::class,
             DropshippersCompanion::class,
+            StockInfo::class,
         ],
     ],
     'class_config' => [

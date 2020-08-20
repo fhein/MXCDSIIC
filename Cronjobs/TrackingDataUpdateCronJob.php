@@ -34,6 +34,7 @@ class TrackingDataUpdateCronJob implements SubscriberInterface
         try {
 
         } catch (Throwable $e) {
+            $this->log->except($e, false, false);
             $result = false;
         }
 
@@ -41,7 +42,7 @@ class TrackingDataUpdateCronJob implements SubscriberInterface
         $end = date('d-m-Y H:i:s');
         $msg = 'TrackingData cronjob ran from ' . $start . ' to ' . $end . $resultMsg;
 
-        $result === true ? $log->info($msg) : $log->error($msg);
+        $result === true ? $log->info($msg) : $log->err($msg);
 
         return $result;
     }

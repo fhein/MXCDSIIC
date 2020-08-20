@@ -10,6 +10,7 @@ use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
 use MxcCommons\Toolbox\Strings\StringTool;
 use MxcDropshipInnocigs\Exception\InvalidArgumentException;
 use MxcDropshipIntegrator\Dropship\ArticleRegistryInterface;
+use MxcDropshipIntegrator\Models\Variant;
 
 class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterface, ArticleRegistryInterface
 {
@@ -57,6 +58,27 @@ class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterfac
 
         $this->select = implode(', ', array_keys($this->fields));
     }
+
+    public function configureDropship(Variant $variant, int $stockInfo, bool $active = true)
+    {
+        $detail = $variant->getDetail();
+        if (! $detail) return;
+
+        $data = [
+            'mxc_dsi_ic_productnumber'  => $variant->getIcNumber(),
+            'mxc_dsi_ic_productname'    => $variant->getName(),
+            'mxc_dsi_ic_purchaseprice'  => $variant->getPurchasePrice(),
+            'mxc_dsi_ic_retailprice'    => round($variant->getRecommendedRetailPrice(), 2),
+            'mxc_dsi_ic_instock'        => $stockInfo[$variant->getIcNumber()] ?? 0,
+            'mxc_dsi_ic_preferownstock' => false,
+            'mxc_dsi_ic_active'         => true,
+            'mxc_dsi_ic_status'         => ArticleRegistry::NO_ERROR,
+            'mxc_dsi_ic_registered'     => true,
+        ];
+        $this->updateSettings($detail->getId(), $data);
+
+    }
+
 
     public function register(int $detailId, string $productNumber, bool $active, bool $preferOwnStock)
     {
