@@ -10,16 +10,6 @@
             <tag name="shopware.event_subscriber"/>
         </service>
 
-        <service id="mxc_dropship_innocigs.subscriber.backendarticle"
-                 class="MxcDropshipInnocigs\Subscribers\BackendArticleSubscriber">
-            <tag name="shopware.event_subscriber"/>
-        </service>
-
-        <service id="mxc_dropship_innocigs.subscriber.backendorder"
-                 class="MxcDropshipInnocigs\Subscribers\BackendOrderSubscriber">
-            <tag name="shopware.event_subscriber"/>
-        </service>
-
         <service id="mxc_dropship_innocigs.cronjob.import"
                  class="MxcDropshipInnocigs\Cronjobs\ImportCronJob">
             <tag name="shopware.event_subscriber"/>

@@ -18,28 +18,10 @@ return [
     'plugin'   => [
     ],
     'doctrine' => [
-        'models'                     => [
+        'models'     => [
             Model::class,
         ],
-        'attributes'                 => [
-            's_order_attributes' => [
-                'mxc_dsi_ic_active'     => ['type' => TypeMapping::TYPE_BOOLEAN],
-                'mxc_dsi_ic_cronstatus' => ['type' => TypeMapping::TYPE_INTEGER],
-                'mxc_dsi_ic_status'     => ['type' => TypeMapping::TYPE_INTEGER],
-            ],
-            's_order_details_attributes' => [
-                'mxc_dsi_ic_id'            => ['type' => TypeMapping::TYPE_STRING],
-                'mxc_dsi_ic_order_id'      => ['type' => TypeMapping::TYPE_STRING],
-                'mxc_dsi_ic_infos'         => ['type' => TypeMapping::TYPE_STRING],
-                'mxc_dsi_ic_supplier'      => ['type' => TypeMapping::TYPE_STRING],
-                'mxc_dsi_ic_stock'         => ['type' => TypeMapping::TYPE_INTEGER],
-                'mxc_dsi_ic_purchaseprice' => ['type' => TypeMapping::TYPE_FLOAT],
-                'mxc_dsi_ic_date'          => ['type' => TypeMapping::TYPE_STRING],
-                'mxc_dsi_ic_status'        => ['type' => TypeMapping::TYPE_INTEGER],
-                'mxc_dsi_ic_message'       => ['type' => TypeMapping::TYPE_STRING],
-                'mxc_dsi_ic_carrier'       => ['type' => TypeMapping::TYPE_STRING],
-                'mxc_dsi_ic_tracking_id'   => ['type' => TypeMapping::TYPE_STRING],
-            ],
+        'attributes' => [
             's_articles_attributes'      => [
                 'mxc_dsi_ic_registered'     => ['type' => TypeMapping::TYPE_BOOLEAN],
                 'mxc_dsi_ic_status'         => ['type' => TypeMapping::TYPE_INTEGER],
