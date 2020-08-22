@@ -22,11 +22,7 @@ class StockInfo
         $this->client = $client;
     }
 
-    /**
-     * @param array $sArticle
-     * @return array
-     */
-    public function getStockInfo($sArticle)
+    public function getStockInfo(array $sArticle)
     {
         $stockInfo = [];
         if ($sArticle['mxc_dsi_ic_productnumber'] != '' &&

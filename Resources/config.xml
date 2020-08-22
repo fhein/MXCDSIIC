@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/5.3/engine/Shopware/Components/Plugin/schema/config.xsd">
+    <elements>
+        <element type="button" scope="locale">
+            <name>mxc_dsi_api_credentials</name>
+            <label lang="de">Zugangsdaten für die Innocigs Dropship API</label>
+            <label lang="en">Innocigs Dropship API Credentials</label>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_api_user</name>
+            <label lang="de">Benutzer</label>
+            <label lang="en">User</label>
+            <description lang="de">Geben Sie hier die Benutzer-ID ein, die Ihnen von Innocigs zur Nutzung der API zur Verfügung gestellt worden ist.</description>
+            <description lang="en">Please enter the user id to access the API provided by InnoCigs.</description>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_api_password</name>
+            <label lang="de">Passwort</label>
+            <label lang="en">Password</label>
+            <description lang="de">Geben Sie hier das Passwort ein, die Ihnen von Innocigs zur Nutzung der API zur Verfügung gestellt worden ist.</description>
+            <description lang="en">Please enter the password to access the API provided by InnoCigs.</description>
+        </element>
+        <element type="button" scope="locale">
+            <name>mxc_dsi_company_information</name>
+            <label lang="de">Unternehmensdaten zur Verwendung als Absender von Dropship-Bestellungen</label>
+            <label lang="en">Company Information / Originator address for dropship orders</label>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_company</name>
+            <label lang="de">Unternehmen</label>
+            <label lang="en">Company</label>
+            <description lang="de">Geben Sie hier den Namen Ihres Unternehmens ein, so wie er bei Innocigs registriert ist.</description>
+            <description lang="en">Please enter your company name as registered with Innocigs.</description>
+        </element>
+        <element required="false" type="text" scope="locale">
+            <name>mxc_dsi_department</name>
+            <label lang="de">Abteilung / Weitere Adresse</label>
+            <label lang="en">Department / Addl. Address</label>
+            <description lang="de">Geben Sie hier die Abteilung oder die weitere Addresszeile ein, so wie sie bei Innocigs registriert ist.</description>
+            <description lang="en">Please enter your department (or additional address line) as registered with Innocigs.</description>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_street</name>
+            <label lang="de">Straße und Hausnummer</label>
+            <label lang="en">Street and number</label>
+            <description lang="de">Geben Sie hier Ihre Straßenadresse mit Hausnummer ein, so wie sie bei Innocigs registriert ist.</description>
+            <description lang="en">Please enter your street address including building number as registered with Innocigs.</description>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_zip</name>
+            <label lang="de">Postleitzahl</label>
+            <label lang="en">ZIP code</label>
+            <description lang="de">Geben Sie hier die Postleitzahl ein, so wie sie bei Innocigs registriert ist.</description>
+            <description lang="en">Please enter your ZIP code as registered with Innocigs.</description>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_city</name>
+            <label lang="de">Ort</label>
+            <label lang="en">City</label>
+            <description lang="de">Geben Sie hier Ihren Ort ein, so wie sie bei Innocigs registriert ist.</description>
+            <description lang="en">Please enter the city as registered with Innocigs.</description>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_country_code</name>
+            <label lang="de">ISO-Länderkennung</label>
+            <label lang="en">Country Code (ISO)</label>
+            <description lang="de">Geben Sie hier die zweistellige ISO-Länderkennung (z.B: DE) ein, so wie sie bei Innocigs registriert ist.</description>
+            <description lang="en">Please enter the ISO country code (for example: US) as registered with Innocigs.</description>
+        </element>
+        <element type="button" scope="locale">
+            <name>mxc_dsi_contact_information</name>
+            <label lang="de">Kontaktinformation</label>
+            <label lang="en">Contact Information</label>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_first_name</name>
+            <label lang="de">Vorname</label>
+            <label lang="en">First name</label>
+            <description lang="de">Geben Sie hier Ihren Vornamen ein, so wie er bei Innocigs registriert ist.</description>
+            <description lang="en">Please enter your first name as registered with Innocigs.</description>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_last_name</name>
+            <label lang="de">Nachname</label>
+            <label lang="en">Last name</label>
+            <description lang="de">Geben Sie hier Ihren Nachnamen ein, so wie er bei Innocigs registriert ist.</description>
+            <description lang="en">Please enter your last name as registered with Innocigs.</description>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_phone</name>
+            <label lang="de">Telefonnummer</label>
+            <label lang="en">Phone Number</label>
+            <description lang="de">Geben Sie hier Ihre Telefonnummer ein, so wie sie bei Innocigs registriert ist.</description>
+            <description lang="en">Please enter your phone number as registered with Innocigs.</description>
+        </element>
+        <element required="true" type="text" scope="locale">
+            <name>mxc_dsi_mail</name>
+            <label lang="de">E-Mail Adresse</label>
+            <label lang="en">Email address</label>
+            <description lang="de">Geben Sie hier Ihre E-Mail-Adresse ein, so wie sie bei Innocigs registriert ist.</description>
+            <description lang="en">Please enter your email address as registered with Innocigs.</description>
+        </element>
+        <element type="button" scope="locale">
+            <name>mxc_dsi_settings</name>
+            <label lang="de">Einstellungen</label>
+            <label lang="en">Settings</label>
+        </element>
+        <element required="true" type="boolean" scope="locale">
+            <name>mxc_dsi_ic_enabled</name>
+            <label lang="de">InnoCigs Dropshipping erlaubt</label>
+            <label lang="en">InnoCigs Dropshipping enabled</label>
+            <description lang="de">Nur wenn hier 'Ja' gewählt ist, ist InnoCigs Drophip aktiv.</description>
+            <description lang="en">InnoCigs Dropship is active only if this option is 'Yes'.</description>
+        </element>
+        <element required="true" type="number" scope="locale">
+            <name>mxc_dsi_ic_priority</name>
+            <label lang="de">Priorität</label>
+            <label lang="en">Priority</label>
+            <description lang="de">Wenn neben InnoCigs weitere Anbieter installiert sind, kommt im Falle, dass mehrere Anbieter liefern können, der mit der höheren Priorität zum Zuge. Größere Zahlen bedeuten höhere Priorität.</description>
+            <description lang="en">If there are more dropship adapters installed the adapter with the higher priority is preferred. Biggest number is highest priority.</description>
+        </element>
+        <element type="button" scope="locale">
+            <name>mxc_dsi_api_test</name>
+            <label lang="de">Konfiguration testen</label>
+            <label lang="en">Test configuration</label>
+        </element>
+    </elements>
+</config>
