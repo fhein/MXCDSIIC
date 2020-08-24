@@ -65,9 +65,12 @@ class ApiClient
         return $this->modelsToArray($this->send($cmd)->getBody(), $flat);
     }
 
-    public function sendOrder($xmlRequest) {
+    // note: we currently support one dropship order per request (the InnoCigs API supports a list of dropship)
+    public function sendOrder($xmlRequest)
+    {
         $cmd = $this->authUrl . '&command=dropship&xml=' . urlencode($xmlRequest);
-        return $this->modelsToArray($this->send($cmd)->getBody(), false);
+        $data = $this->xmlToArray($this->send($cmd)->getBody());
+        return $data['DROPSHIPPING']['DROPSHIP'];
     }
 
     /**
@@ -77,7 +80,7 @@ class ApiClient
      */
     public function getTrackingData($date = null)
     {
-        if (!$date instanceof DateTime) {
+        if (! $date instanceof DateTime) {
             $date = (new DateTime())->format('Y-m-d');
         }
         $cmd = $this->authUrl . '&command=tracking&day=' . $date;
@@ -96,7 +99,7 @@ class ApiClient
         $cmd = $this->authUrl . '&command=quantity_all';
         $data = $this->xmlToArray($this->send($cmd)->getBody());
         $stockInfo = [];
-        foreach($data['QUANTITIES']['PRODUCT'] as $record) {
+        foreach ($data['QUANTITIES']['PRODUCT'] as $record) {
             $stockInfo[$record['PRODUCTS_MODEL']] = $record['QUANTITY'];
         }
         return $stockInfo;
@@ -112,30 +115,43 @@ class ApiClient
         $dom = new DOMDocument();
         $result = $dom->loadXML($xml);
         if ($result === false) {
-            throw new ApiException('InnoCigs API: <br/>Invalid XML data received.');
+            throw ApiException::fromInvalidXML();
         }
         $models = $dom->getElementsByTagName('PRODUCT');
+
+        // this is a workaround because the InnoCigs API does not return an error if the queried productnumber
+        // does not exist
+        if (count($models) == 0) {
+            throw ApiException::fromInnocigsErrors([
+                'errors' => [
+                    'error' => [
+                        'CODE'    => ApiException::PRODUCT_UNKNOWN_1,
+                        'MESSAGE' => 'Unbekanntes Produkt,'
+                    ]
+                ]
+            ]);
+        }
         /** @var DOMElement $model */
         $import = [];
         foreach ($models as $model) {
             $item = [];
-            $item['category']               = $this->getNodeValue($model, 'CATEGORY');
-            $item['model']                  = $this->getNodeValue($model, 'MODEL');
-            $item['master']                 = $this->getNodeValue($model, 'MASTER');
-            $item['ean']                    = $this->getNodeValue($model, 'EAN');
-            $item['name']                   = $this->getNodeValue($model, 'NAME');
-            $item['productName']            = $this->getNodeValue($model, 'PARENT_NAME');
-            $item['purchasePrice']          = $this->getNodeValue($model, 'PRODUCTS_PRICE');
+            $item['category'] = $this->getNodeValue($model, 'CATEGORY');
+            $item['model'] = $this->getNodeValue($model, 'MODEL');
+            $item['master'] = $this->getNodeValue($model, 'MASTER');
+            $item['ean'] = $this->getNodeValue($model, 'EAN');
+            $item['name'] = $this->getNodeValue($model, 'NAME');
+            $item['productName'] = $this->getNodeValue($model, 'PARENT_NAME');
+            $item['purchasePrice'] = $this->getNodeValue($model, 'PRODUCTS_PRICE');
             $item['recommendedRetailPrice'] = $this->getNodeValue($model, 'PRODUCTS_PRICE_RECOMMENDED');
-            $item['manufacturer']           = $this->getNodeValue($model, 'MANUFACTURER');
-            $item['manual']                 = $this->getNodeValue($model, 'PRODUCTS_MANUAL');
-            $item['description']            = $this->getNodeValue($model, 'DESCRIPTION');
-            $item['image']                  = $this->getNodeValue($model, 'PRODUCTS_IMAGE');
+            $item['manufacturer'] = $this->getNodeValue($model, 'MANUFACTURER');
+            $item['manual'] = $this->getNodeValue($model, 'PRODUCTS_MANUAL');
+            $item['description'] = $this->getNodeValue($model, 'DESCRIPTION');
+            $item['image'] = $this->getNodeValue($model, 'PRODUCTS_IMAGE');
 
             $attributes = $model->getElementsByTagName('PRODUCTS_ATTRIBUTES')->item(0)->childNodes;
             /** @var DOMElement $attribute */
             foreach ($attributes as $attribute) {
-                if (!$attribute instanceof DOMElement) {
+                if (! $attribute instanceof DOMElement) {
                     continue;
                 }
                 $item['options'][$attribute->tagName] = $attribute->nodeValue;
@@ -182,16 +198,12 @@ class ApiClient
             $dump = Shopware()->DocPath() . 'var/log/invalid-innocigs-api-response-' . date('Y-m-d-H-i-s') . '.txt';
             file_put_contents($dump, $xml);
             $this->log->err('Invalid InnoCigs API response dumped to ' . $dump);
-            throw new ApiException('InnoCigs API: <br/>Invalid XML data received. See log file for details.');
+            throw ApiException::fromInvalidXML();
         }
         $json = json_encode($xml);
-        if ($json === false) {
-            throw new ApiException('InnoCigs API: <br/>Failed to encode XML data to JSON.');
-        }
+        if ($json === false) throw ApiException::fromJsonEncode();
         $result = json_decode($json, true);
-        if ($result === false) {
-            throw new ApiException('InnoCigs API: <br/>Failed to decode JSON data to XML.');
-        }
+        if ($result === false) throw ApiException::fromJsonDecode();
         $this->checkArrayResult($result);
         return $result;
     }
@@ -203,7 +215,6 @@ class ApiClient
         }
     }
 
-
     protected function logXML($xml)
     {
         $dom = new DOMDocument("1.0", "utf-8");
@@ -212,10 +223,10 @@ class ApiClient
         $pretty = $dom->saveXML();
 
         $reportDir = Shopware()->DocPath() . 'var/log/mxc_dropship_innocigs';
-        if (file_exists($reportDir) && !is_dir($reportDir)) {
+        if (file_exists($reportDir) && ! is_dir($reportDir)) {
             unlink($reportDir);
         }
-        if (!is_dir($reportDir)) {
+        if (! is_dir($reportDir)) {
             mkdir($reportDir);
         }
 
@@ -239,10 +250,8 @@ class ApiClient
 
     protected function checkArrayResult(array $response)
     {
-        $error = $response['ERRORS']['ERROR'] ?? null;
-        if ($error) {
-            throw new ApiException('InnoCigs API: <br/>' . $error['MESSAGE']);
-        }
+        $errors = $response['ERRORS'] ?? null;
+        if ($errors) throw ApiException::fromInnocigsErrors($errors);
     }
 
     protected function getNodeValue(DOMElement $model, string $tagName)
@@ -264,13 +273,11 @@ class ApiClient
         $client->setUri($cmd);
         try {
             $response = $client->send();
-            if (!$response->isSuccess()) {
-                throw new ApiException('InnoCigs API: <br/>' . 'HTTP status: ' . $response->getStatusCode());
-            }
+            if (! $response->isSuccess()) throw ApiException::fromHttpStatus($response->getStatusCode());
             return $response;
         } catch (ZendClientException $e) {
             // no response or response empty
-            throw new ApiException($e->getMessage());
+            throw new ApiException($e->getMessage(), $e->getCode());
         }
     }
 

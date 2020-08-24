@@ -19,7 +19,6 @@
                  class="MxcDropshipInnocigs\Cronjobs\PriceUpdateCronJob">
             <tag name="shopware.event_subscriber"/>
         </service>
-
         <service id="mxc_dropship_innocigs.cronjob.tracking_data_update"
                  class="MxcDropshipInnocigs\Cronjobs\TrackingDataUpdateCronJob">
             <tag name="shopware.event_subscriber"/>

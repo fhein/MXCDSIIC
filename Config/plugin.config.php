@@ -11,6 +11,7 @@ use MxcDropshipInnocigs\Services\Credentials;
 use MxcDropshipInnocigs\Services\DropshipOrder;
 use MxcDropshipInnocigs\Services\DropshippersCompanion;
 use MxcDropshipInnocigs\Services\ImportClient;
+use MxcDropshipInnocigs\Services\OrderProcessor;
 use MxcDropshipInnocigs\Services\StockInfo;
 use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
 
@@ -33,15 +34,12 @@ return [
                 'mxc_dsi_ic_retailprice'    => ['type' => TypeMapping::TYPE_FLOAT],
                 'mxc_dsi_ic_instock'        => ['type' => TypeMapping::TYPE_INTEGER],
             ],
-
         ],
     ],
 
     'services'     => [
-        'factories' => [
-            DropshipOrder::class => AugmentedObjectFactory::class,
-        ],
         'magicals'  => [
+            DropshipOrder::class,
             ArticleRegistry::class,
             ApiClient::class,
             ApiClientSequential::class,
@@ -49,10 +47,10 @@ return [
             ImportClient::class,
             DropshippersCompanion::class,
             StockInfo::class,
+            OrderProcessor::class,
         ],
     ],
     'class_config' => [
         ImportClient::class  => 'ImportClient.config.php',
-        DropshipOrder::class => 'DropshipOrder.config.php',
     ],
 ];

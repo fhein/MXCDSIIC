@@ -14,6 +14,4 @@ class InvalidArgumentException extends \InvalidArgumentException
         );
         return new self($msg);
     }
-
-
 }
