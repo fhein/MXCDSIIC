@@ -17,8 +17,8 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.variant.List', {
   },
 
   isDropshipProduct: function(value, metaData, record) {
-    // let active = record.data.mxc_dsi_ic_active;
-    // let preferOwnStock = record.data.mxc_dsi_ic_preferownstock;
+    // let active = record.data.mxcbc_dsi_ic_active;
+    // let preferOwnStock = record.data.mxcbc_dsi_ic_preferownstock;
     // let color = null;
     // debugger;
     //
@@ -32,8 +32,8 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.variant.List', {
     // return '<div style="width:16px;height:16px;background:' + color + ';color:white;margin:0 auto;'
     //         + 'text-align:center;border-radius:3px;padding-top:0;</div>';
 
-    if (record.data.mxc_dsi_ic_active)
-      return record.raw.mxc_dsi_ic_dropship;
+    if (record.data.mxcbc_dsi_ic_active)
+      return record.raw.mxcbc_dsi_ic_dropship;
   }
 });
 //{/block}

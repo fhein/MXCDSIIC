@@ -25,9 +25,9 @@ class StockInfo
     public function getStockInfo(array $sArticle)
     {
         $stockInfo = [];
-        if ($sArticle['mxc_dsi_ic_productnumber'] != '' &&
-            $sArticle['mxc_dsi_ic_active'] == 1 &&
-            $sArticle['mxc_dsi_ic_instock'] > 0
+        if ($sArticle['mxcbc_dsi_ic_productnumber'] != '' &&
+            $sArticle['mxcbc_dsi_ic_active'] == 1 &&
+            $sArticle['mxcbc_dsi_ic_instock'] > 0
         ) {
             $instock = $this->getStock($sArticle);
             $stockInfo = [
@@ -40,11 +40,11 @@ class StockInfo
 
     protected function getStock(array $sArticle)
     {
-        $productNumber = $sArticle['mxc_dsi_ic_productnumber'];
+        $productNumber = $sArticle['mxcbc_dsi_ic_productnumber'];
         if ($this->stock[$productNumber] !== null) return $this->stock[$productNumber];
-        $instock = $sArticle['mxc_dsi_ic_instock'];
+        $instock = $sArticle['mxcbc_dsi_ic_instock'];
         if ($this->liveStock) {
-            $instock = $this->client->getStockInfo($sArticle['mxc_dsi_ic_productnumber']);
+            $instock = $this->client->getStockInfo($sArticle['mxcbc_dsi_ic_productnumber']);
         }
         // we cache the result to prevent multiple queries to the API if $liveStock is true
         $this->stock[$productNumber] = $instock;

@@ -122,14 +122,7 @@ class ApiClient
         // this is a workaround because the InnoCigs API does not return an error if the queried productnumber
         // does not exist
         if (count($models) == 0) {
-            throw ApiException::fromInnocigsErrors([
-                'errors' => [
-                    'error' => [
-                        'CODE'    => ApiException::PRODUCT_UNKNOWN_1,
-                        'MESSAGE' => 'Unbekanntes Produkt,'
-                    ]
-                ]
-            ]);
+            throw ApiException::fromEmptyProductInfo();
         }
         /** @var DOMElement $model */
         $import = [];

@@ -13,30 +13,17 @@ use Shopware_Components_Config;
 
 class DropshipOrder implements ClassConfigAwareInterface, ModelManagerAwareInterface
 {
+    // Auftrag noch nicht überträgen
+    const ORDER_STATUS_OPEN         = 0;
+    // Auftrag erfolgreich übertragen, warten auf Tracking-Daten
+    const ORDER_STATUS_TRANSFERRED  = 1;
+    // Trackingdaten empfangen, Dropshipauftrag abgeschlossen
+    const ORDER_STATUS_CLOSED       = 2;
+    // Auftrag konnte nicht übertragen werden, Auftrag wird ignoriert, manuelles Eingreifen erforderlich
+    const ORDER_STATUS_ERROR        = 99;
+
     use ClassConfigAwareTrait;
     use ModelManagerAwareTrait;
-
-    const RECIPIENT_COMPANY_TOO_LONG = 100;
-    const RECIPIENT_COMPANY2_TOO_LONG = 101;
-    const RECIPIENT_FIRST_NAME_TOO_SHORT = 102;
-    const RECIPIENT_LAST_NAME_TOO_SHORT = 103;
-    const RECIPIENT_NAME_TOO_LONG = 104;
-    const RECIPIENT_STREET_ADDRESS_TOO_SHORT = 105;
-    const RECIPIENT_STREET_ADDRESS_TOO_LONG = 106;
-    const RECIPIENT_ZIP_TOO_SHORT = 107;
-    const RECIPIENT_CITY_TOO_SHORT = 108;
-
-    protected $errorMessages = [
-        self::RECIPIENT_COMPANY_TOO_LONG         => 'Der Firmenname darf maximal 30 Zeichen lang sein.',
-        self::RECIPIENT_COMPANY2_TOO_LONG        => 'Der Firmenname 2 darf maximal 30 Zeichen lang sein.',
-        self::RECIPIENT_FIRST_NAME_TOO_SHORT     => 'Der Vorname muss mindestens aus zwei Zeichen bestehen.',
-        self::RECIPIENT_LAST_NAME_TOO_SHORT      => 'Der Nachname muss mindestens aus zwei Zeichen bestehen.',
-        self::RECIPIENT_NAME_TOO_LONG            => 'Vorname und Nachname dürfen zusammen nicht mehr als 34 Zeichen enthalten.',
-        self::RECIPIENT_STREET_ADDRESS_TOO_SHORT => 'Die Straße mit Hausnummer muss mindestens aus fünf Zeichen bestehen.',
-        self::RECIPIENT_STREET_ADDRESS_TOO_LONG  => 'Die Straße mit Hausnummer darf höchstens aus 35 Zeichen bestehen.',
-        self::RECIPIENT_ZIP_TOO_SHORT            => 'Die Postleitzahl muss mindestens aus vier Zeichen bestehen.',
-        self::RECIPIENT_CITY_TOO_SHORT           => 'Die Stadt muss mindestens aus drei Zeichen bestehen.',
-    ];
 
     private $positions = [];
     private $orderNumber;
@@ -64,16 +51,16 @@ class DropshipOrder implements ClassConfigAwareInterface, ModelManagerAwareInter
         $config = $this->classConfig['originator'];
 
         $this->setOriginator(
-            $this->config->get('mxc_dsi_ic_company'),
-            $this->config->get('mxc_dsi_ic_department'),
-            $this->config->get('mxc_dsi_ic_first_name'),
-            $this->config->get('mxc_dsi_ic_last_name'),
-            $this->config->get('mxc_dsi_ic_street'),
-            $this->config->get('mxc_dsi_ic_zip'),
-            $this->config->get('mxc_dsi_ic_city'),
-            $this->config->get('mxc_dsi_ic_country_code'),
-            $this->config->get('mxc_dsi_ic_mail'),
-            $this->config->get('mxc_dsi_ic_phone')
+            $this->config->get('mxcbc_dsi_ic_company'),
+            $this->config->get('mxcbc_dsi_ic_department'),
+            $this->config->get('mxcbc_dsi_ic_first_name'),
+            $this->config->get('mxcbc_dsi_ic_last_name'),
+            $this->config->get('mxcbc_dsi_ic_street'),
+            $this->config->get('mxcbc_dsi_ic_zip'),
+            $this->config->get('mxcbc_dsi_ic_city'),
+            $this->config->get('mxcbc_dsi_ic_country_code'),
+            $this->config->get('mxcbc_dsi_ic_mail'),
+            $this->config->get('mxcbc_dsi_ic_phone')
         );
 
         $this->setRecipientFromArray($shippingAddress);
@@ -143,57 +130,49 @@ class DropshipOrder implements ClassConfigAwareInterface, ModelManagerAwareInter
         $errors = $this->validateRecipient();
 
         if (! empty($errors)) {
-            throw DropshipOrderException::fromInvalidRecipientAdress($errors);
+            throw DropshipOrderException::fromInvalidRecipientAddress($errors);
         }
-    }
-
-    protected function getAddressError($code)
-    {
-        return [
-            'code' => $code,
-            'msg' => $this->errorMessages[$code],
-        ];
     }
 
     protected function validateRecipient()
     {
         $errors = [];
         if (strlen($this->recipient['COMPANY']) > 30) {
-            $errors[] = $this->getAddressError(self::RECIPIENT_COMPANY_TOO_LONG);
+            $errors[] = DropshipOrderException::RECIPIENT_COMPANY_TOO_LONG;
         }
 
         if (strlen($this->recipient['COMPANY2']) > 30) {
-            $errors[] = $this->getAddressError(self::RECIPIENT_COMPANY2_TOO_LONG);
+            $errors[] = DropshipOrderException::RECIPIENT_COMPANY2_TOO_LONG;
         }
-
+        
         $firstName = $this->recipient['FIRSTNAME'];
         if (strlen($firstName) < 2) {
-            $errors[] = $this->getAddressError(self::RECIPIENT_FIRST_NAME_TOO_SHORT);
+            $errors[] = DropshipOrderException::RECIPIENT_FIRST_NAME_TOO_SHORT;
         }
 
         $lastName = $this->recipient['LASTNAME'];
         if (strlen($lastName) < 2) {
-            $errors[] = $this->getAddressError(self::RECIPIENT_LAST_NAME_TOO_SHORT);
+            $errors[] = DropshipOrderException::RECIPIENT_LAST_NAME_TOO_SHORT;
         }
 
         if (strlen($firstName.$lastName) > 34) {
-            $errors[] = $this->getAddressError(self::RECIPIENT_NAME_TOO_LONG);
+            $errors[] = DropshipOrderException::RECIPIENT_NAME_TOO_LONG;
         }
 
         if (strlen($this->recipient['STREET_ADDRESS']) > 35) {
-            $errors[] = $this->getAddressError(self::RECIPIENT_STREET_ADDRESS_TOO_LONG);
+            $errors[] = DropshipOrderException::RECIPIENT_STREET_ADDRESS_TOO_LONG;
         }
 
         if (strlen($this->recipient['STREET_ADDRESS']) < 5) {
-            $errors[] = $this->getAddressError(self::RECIPIENT_STREET_ADDRESS_TOO_SHORT);
+            $errors[] = DropshipOrderException::RECIPIENT_STREET_ADDRESS_TOO_SHORT;
         }
 
         if (strlen($this->recipient['POSTCODE']) < 4) {
-            $errors[] = $this->getAddressError(self::RECIPIENT_ZIP_TOO_SHORT);
+            $errors[] = DropshipOrderException::RECIPIENT_ZIP_TOO_SHORT;
         }
 
         if (strlen($this->recipient['CITY']) < 3) {
-            $errors[] = $this->getAddressError(self::RECIPIENT_CITY_TOO_SHORT);
+            $errors[] = DropshipOrderException::RECIPIENT_CITY_TOO_SHORT;
         }
         return $errors;
     }
@@ -268,8 +247,8 @@ class DropshipOrder implements ClassConfigAwareInterface, ModelManagerAwareInter
 
     protected function setPositionError(&$position, $code, $msg)
     {
-        $position['errorcode'] = $code;
-        $position['errormessage'] = $msg;
+        $position['CODE'] = $code;
+        $position['MESSAGE'] = $msg;
     }
 
     protected function validateOrderPositions()
@@ -334,6 +313,9 @@ class DropshipOrder implements ClassConfigAwareInterface, ModelManagerAwareInter
                 throw DropshipOrderException::fromInnocigsErrors($errors['ERRORS']);
             }
         } catch (ApiException $e) {
+            if ($e->getCode() === ApiException::INNOCIGS_ERRORS) {
+                throw DropshipOrderException::fromInnocigsErrors($e->getInnocigsErrors());
+            }
             throw DropshipOrderException::fromApiException($e);
         }
     }

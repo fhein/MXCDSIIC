@@ -30,5 +30,4 @@
         <interval>300</interval>
         <disableOnError>false</disableOnError>
     </cronjob>
-
 </cronjobs>

@@ -6,12 +6,20 @@ use RuntimeException;
 
 class ApiException extends RuntimeException {
 
+    // will be thrown by ApiException
     const NO_RESPONSE       = 1000;
     const JSON_DECODE       = 1001;
     const JSON_ENCODE       = 1002;
+    const INVALID_XML_DATA  = 1003;
+    const HTTP_STATUS       = 1004;
+
+    // will be thrown by ApiException
+    // get the error list via ApiException->getInnocigsErrors()
     const INNOCIGS_ERRORS   = 1004;
 
-    // InnoCigs API errors
+    // InnoCigs API errors, will not be thrown by ApiException
+    // this is a list of all InnoCigs errors, error message provided by InnoCigs
+    //
     const LOGIN_FAILED                  = 10000;
     const INVALID_XML                   = 10001;
     const NO_DROPSHIP_DATA              = 10002;
@@ -61,22 +69,37 @@ class ApiException extends RuntimeException {
     const MAINTENANCE                   = 50001;
 
     protected $innocigsErrors = null;
+    protected $httpStatus = null;
+
+    // this is a workaround because the InnoCigs API does not return UNKNOWN_PRODUCT
+    // if an unknown product get queried via &command=product&model=unknown
+    public static function fromEmptyProductInfo() {
+        $errors = [
+            'errors' => [
+                'error' => [
+                    'CODE'    => ApiException::PRODUCT_UNKNOWN_1,
+                    'MESSAGE' => 'Unbekanntes Produkt,'
+                ]
+            ]
+        ];
+        return self::fromInnocigsErrors($errors);
+    }
 
     public static function fromInvalidXML() {
         $msg = 'InnoCigs API: <br/>Invalid XML data received.';
-        $code = self::INVALID_XML;
+        $code = self::INVALID_XML_DATA;
         return new ApiException($msg, $code);
     }
 
     public static function fromJsonEncode() {
         $msg = 'InnoCigs API: <br/>Failed to encode XML data to JSON.';
-        $code = self::INVALID_XML;
+        $code = self::JSON_ENCODE;
         return new ApiException($msg, $code);
     }
 
     public static function fromJsonDecode() {
         $msg = 'InnoCigs API: <br/>Failed to decode JSON data.';
-        $code = self::INVALID_XML;
+        $code = self::JSON_DECODE;
         return new ApiException($msg, $code);
     }
 
@@ -91,7 +114,8 @@ class ApiException extends RuntimeException {
     public static function fromHttpStatus(int $status) {
         $code = $status;
         $msg = sprintf('InnoCigs API: <br\>HTTP Status: %u', $status);
-        return new ApiException($msg, $code);
+        $e = new ApiException($msg, $code);
+        $e->setHttpStatus($status);
     }
 
     public function setInnocigsErrors(array $errors)
@@ -111,6 +135,16 @@ class ApiException extends RuntimeException {
     public function getInnocigsErrors()
     {
         return $this->innocigsErrors;
+    }
+
+    public function getHttpStatus()
+    {
+        return $this->httpStatus;
+    }
+
+    public function setHttpStatus($httpStatus): void
+    {
+        $this->httpStatus = $httpStatus;
     }
 }
 

@@ -24,7 +24,7 @@ class CredentialsFactory implements FactoryInterface
         if (is_string($user)) {
             $password = $config->offsetGet('api_password');
         } else {
-            $credentialsTable = 's_plugin_mxc_dsi_credentials';
+            $credentialsTable = 's_mxcbc_dsi_credentials';
             /**
              * @var Connection $dbal
              */

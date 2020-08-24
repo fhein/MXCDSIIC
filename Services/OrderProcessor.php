@@ -19,12 +19,17 @@ class OrderProcessor implements ModelManagerAwareInterface, DatabaseAwareInterfa
     use DatabaseAwareTrait;
     use LoggerAwareTrait;
 
+
     /** @var DropshipOrder */
     protected $dropshipOrder;
 
-    public function __construct(DropshipOrder $dropshipOrder)
+    /** @var OrderErrorHandler*/
+    protected $errorHandler;
+
+    public function __construct(DropshipOrder $dropshipOrder, OrderErrorHandler $errorHandler)
     {
         $this->dropshipOrder = $dropshipOrder;
+        $this->errorHandler = $errorHandler;
     }
 
     // The $order array describes a new order which is paid, so drophip order needs to get send
@@ -66,13 +71,13 @@ class OrderProcessor implements ModelManagerAwareInterface, DatabaseAwareInterfa
     {
         $dropshipPositions = [];
         foreach ($details as $detail) {
-            if ($detail['mxc_dsi_ic_status'] != 'OK') {
-                if ($detail['mxc_dsi_supplier'] !== DropshipManager::SUPPLIER_INNOCIGS) {
+            if ($detail['mxcbc_dsi_ic_status'] != 'OK') {
+                if ($detail['mxcbc_dsi_supplier'] !== DropshipManager::SUPPLIER_INNOCIGS) {
                     continue;
                 }
                 $dropshipPositions[] = [
                     'id'            => $detail['id'],
-                    'productnumber' => $detail['mxc_dsi_ic_productnumber'],
+                    'productnumber' => $detail['mxcbc_dsi_ic_productnumber'],
                     'quantity'      => $detail['quantity'],
                 ];
             }
@@ -128,197 +133,7 @@ class OrderProcessor implements ModelManagerAwareInterface, DatabaseAwareInterfa
         }
     }
 
-    protected function handleDropshipOrderException(DropshipOrderException $e)
-    {
-        switch ($e->getCode()) {
-            case DropshipOrderException::INNOCIGS_ERRORS:
-                break;
-            case DropshipOrderException::DROPSHIP_NOK:
-                break;
-            case DropshipOrderException::POSITIONS_ERROR:
-                break;
-            case DropshipOrderException::RECIPIENT_ADDRESS_ERROR:
-                break;
-            case DropshipOrderException::API_EXCEPTION:
-                break;
-            case DropshipOrderException::POSITION_EXCEEDS_STOCK:
-                break;
-            case DropshipOrderException::PRODUCT_NUMBER_MISSING:
-                break;
-            case DropshipOrderException::PRODUCT_NOT_AVAILABLE:
-                break;
-            case DropshipOrderException::PRODUCT_UNKNOWN:
-                break;
-            case DropshipOrderException::PRODUCT_OUT_OF_STOCK:
-                break;
-            default:
-                break;
-        }
 
-        if (isset($dropshipInfo['ERRORS']['ERROR'])) {
-            $errorCodeListForEmail .= 'Bestellnummer: ' . $fullOrder['ordernumber'] . PHP_EOL . 'ErrorCode: ' . $dropshipInfo['ERRORS']['ERROR']['CODE'] . PHP_EOL . $dropshipInfo['ERRORS']['ERROR']['MESSAGE'] . PHP_EOL . '------' . PHP_EOL;
-            $processedOrderNumbers .= 'NOK: ' . $fullOrder['ordernumber'] . PHP_EOL;
-        } else {
-            if ($dropshipInfo['DROPSHIPPING']['DROPSHIP']['STATUS'] == 'NOK') {
-                $errorCode = $dropshipInfo['DROPSHIPPING']['DROPSHIP']['ERRORS']['ERROR']['CODE'];
-                $errorMessage = $dropshipInfo['DROPSHIPPING']['DROPSHIP']['ERRORS']['ERROR']['MESSAGE'];
-                $orderInfoMessage = $errorCode . '|' . $errorMessage;
-                $processedOrderNumbers .= 'NOK: ' . $fullOrder['ordernumber'] . PHP_EOL;
-            } else {
-                $processedOrderNumbers .= 'OK: ' . $fullOrder['ordernumber'] . PHP_EOL;
-            }
-
-            $orderInfo = [
-                'status'     => $dropshipInfo['DROPSHIPPING']['DROPSHIP']['STATUS'],
-                'message'    => $dropshipInfo['DROPSHIPPING']['DROPSHIP']['MESSAGE'],
-                'dropshipId' => $dropshipInfo['DROPSHIPPING']['DROPSHIP']['DROPSHIP_ID'],
-                'orderId'    => $dropshipInfo['DROPSHIPPING']['DROPSHIP']['ORDERS_ID'],
-                'info'       => $orderInfoMessage,
-                'date'       => date('d.m.Y H:i:s')
-            ];
-            if (! $errorCode) {
-                $this->setDropshipStatus($fullOrder['ordernumber'], 100);
-                $this->setOrderStatusForArticle($fullOrder['ordernumber'], self::STATE_TRANSFER_ARTICLE);
-            } else {
-                $this->setDropshipStatus($fullOrder['ordernumber'], -100);
-            }
-
-        }
-    }
-
-    protected function handleApiException(ApiException $e)
-    {
-        switch($e->getCode()) {
-            case ApiException::LOGIN_FAILED:
-                $msg = 'Die Anmeldung bei der InnoCigs Dropship API ist fehlgeschlagen. Bitte überprüfen Sie '
-                    . 'den Benutzernamen und das Passwort.';
-                break;
-            case ApiException::INVALID_XML:
-                $msg = 'Das an InnoCigs übertragene XML ist fehlerhaft.';
-                break;
-            case ApiException::NO_DROPSHIP_DATA:
-                $msg = 'Keine Dropship Daten vorhanden.';
-                break;
-            case ApiException::DROPSHIP_DATA_INCOMPLETE:
-                $msg = 'Die überträgenen Dropship Daten sind unvollständig.';
-                break;
-            case ApiException::UNKNOWN_API_FUNCTION:
-                $msg = 'Die aufgerufenen API Funktion existiert nicht.';
-                break;
-            case ApiException::MISSING_ORIGINATOR:
-                $msg = 'Fehlende Absenderadresse.';
-                break;
-            case ApiException::INVALID_ORIGINATOR:
-                $msg = 'Ungültige Absenderadresse.';
-                break;
-            case ApiException::PAYMENT_LOCKED:
-                $msg = 'Ungültige Absenderadresse.';
-                break;
-            case ApiException::PAYMENT_LIMIT_EXCEEDED:
-                $msg = 'Der Dropship-Auftrag wurde von InnoCigs abgelehnt, da Ihr Kreditrahmen ausgeschöpft ist.';
-                break;
-            case ApiException::XML_ALREADY_UPLOADED:
-                $msg = 'Die XML Daten wurden bereits hochgeladen.';
-                break;
-            case ApiException::DROPSHIP_DATA_X_INCOMPLETE:
-                $msg = 'Die Dropsip Daten sind unvollständig.';
-                break;
-            case ApiException::ORIGINATOR_DATA_X_MISSING:
-                $msg = 'Fehlende Absenderadresse.';
-                break;
-            case ApiException::ORIGINATOR_DATA_X_INCOMPLETE:
-                $msg = 'Absenderadresse unvollständig.';
-                break;
-            case ApiException::RECIPIENT_DATA_X_MISSING:
-                $msg = 'Fehlende Empfängeradresse.';
-                break;
-            case ApiException::RECIPIENT_DATA_X_INCOMPLETE:
-                $msg = 'Unvollständige Empfängeradresse.';
-                break;
-            case ApiException::DROPSHIP_WITHOUT_PRODUCTS:
-                $msg = 'Dropship-Auftrag ohne Bestellpositionen.';
-                break;
-
-            case ApiException::ORDER_POSITION_ERROR_1:
-                // intentional fall through
-            case ApiException::ORDER_POSITION_ERROR_2:
-                // intentional fall through
-            case ApiException::ORDER_POSITION_ERROR_3:
-                // intentional fall through
-            case ApiException::ORDER_POSITION_ERROR_4:
-                // intentional fall through
-            case ApiException::ORDER_POSITION_ERROR_5:
-                // intentional fall through
-            case ApiException::ORDER_POSITION_ERROR_6:
-                // intentional fall through
-            case ApiException::ORDER_POSITION_ERROR_7:
-                // intentional fall through
-            case ApiException::ORDER_POSITION_ERROR_8:
-                // intentional fall through
-            case ApiException::ORDER_POSITION_ERROR_9:
-                // intentional fall through
-            case ApiException::ORDER_POSITION_ERROR_10:
-                // intentional fall through
-            case ApiException::PRODUCT_DEFINITION_ERROR_1:
-                // intentional fall through
-            case ApiException::PRODUCT_DEFINITION_ERROR_2:
-                // intentional fall through
-            case ApiException::PRODUCT_DEFINITION_ERROR_3:
-                $msg = 'Fehler in einer Bestellposition.';
-                break;
-
-            case ApiException::MISSING_ORDERNUMBER:
-                $msg = 'Fehlende Bestellnummer.';
-                break;
-            case ApiException::DUPLICATE_ORDERNUMBER:
-                $msg = 'Die übermittelte Bestellnummer wurde bereits verwendet.';
-                break;
-            case ApiException::ADDRESS_DATA_ERROR:
-                $msg = 'Fehler in den Adressdaten.';
-                break;
-            case ApiException::PRODUCT_NUMBER_MISSING:
-                $msg = 'Fehlende Produktnummer.';
-                break;
-            case ApiException::PRODUCT_NOT_AVAILABLE_1:
-                // intentional fall through
-            case ApiException::PRODUCT_NOT_AVAILABLE_2:
-                $msg = 'Produkt ist nicht verfügbar.';
-                break;
-            case ApiException::PRODUCT_UNKNOWN_1:
-                // intentional fall through
-            case ApiException::PRODUCT_UNKNOWN_2:
-                // intentional fall through
-            case ApiException::PRODUCT_UNKNOWN_3:
-                // intentional fall through
-            case ApiException::PRODUCT_UNKNOWN_4:
-                $msg = 'Unbekanntes Produkt.';
-                break;
-            case ApiException::NOT_ONE_ORDER:
-                $msg = 'Mehr als ein Auftrag in der Bestellung.';
-                break;
-            case ApiException::HEAD_DATA_MISSING:
-                $msg = 'Fehlende Kopfdaten.';
-                break;
-            case ApiException::DELIVERY_ADDRESS_INVALID_1:
-                // intentional fall through
-            case ApiException::DELIVERY_ADDRESS_INVALID_2:
-                $msg = 'Ungültige Lieferadresse.';
-                break;
-
-            case ApiException::ORDER_NUMBER_INVALID_1:
-                // intentional fall through
-            case ApiException::ORDER_NUMBER_INVALID_2:
-                $msg = 'Ungültige Bestellnummer.';
-                break;
-
-            case ApiException::TOO_MANY_API_ACCESSES:
-                $msg = 'API-Aufruf wegen zu vieler API-Zugriffe abgelehnt.';
-                break;
-            case ApiException::MAINTENANCE:
-                $msg = 'Zugriff nicht möglich, weil sich die InnoCigs-API im Wartungsmodus befindet';
-                break;
-        }
-    }
 
     private function getShippingAddress($orderId)
     {
@@ -338,12 +153,12 @@ class OrderProcessor implements ModelManagerAwareInterface, DatabaseAwareInterfa
           UPDATE
             s_order_details_attributes
           SET
-            mxc_dsi_date = :date,
-            mxc_dsi_status = :status,
-            mxc_dsi_message = :message,
-            mxc_dsi_id = :dropshipId,
-            mxc_dsi_order_id = :orderId,
-            mxc_dsi_infos = :info
+            mxcbc_dsi_date = :date,
+            mxcbc_dsi_status = :status,
+            mxcbc_dsi_message = :message,
+            mxcbc_dsi_id = :dropshipId,
+            mxcbc_dsi_order_id = :orderId,
+            mxcbc_dsi_infos = :info
           WHERE
             id IN (:ids)
         ', [

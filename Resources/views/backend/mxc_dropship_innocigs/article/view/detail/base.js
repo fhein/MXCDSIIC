@@ -57,9 +57,9 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base', {
       layout: 'anchor',
       border:false,
       items:[
-        me.mxc_dsi_ic_productname,
-        me.mxc_dsi_ic_purchaseprice,
-        me.mxc_dsi_ic_instock,
+        me.mxcbc_dsi_ic_productname,
+        me.mxcbc_dsi_ic_purchaseprice,
+        me.mxcbc_dsi_ic_instock,
       ]
     });
 
@@ -72,10 +72,10 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base', {
       },
       border:false,
       items:[
-        me.mxc_dsi_ic_productnumber,
-        me.mxc_dsi_ic_retailprice,
-        me.mxc_dsi_ic_preferownstock,
-        me.mxc_dsi_ic_active
+        me.mxcbc_dsi_ic_productnumber,
+        me.mxcbc_dsi_ic_retailprice,
+        me.mxcbc_dsi_ic_preferownstock,
+        me.mxcbc_dsi_ic_active
       ]
     });
 
@@ -84,61 +84,61 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base', {
     return [
       leftContainer,
       rightContainer,
-      me.mxc_dsi_ic_savebutton,
-      me.mxc_dsi_ic_removebutton
+      me.mxcbc_dsi_ic_savebutton,
+      me.mxcbc_dsi_ic_removebutton
     ] ;
   },
 
   createMxcControls: function() {
     let me = this;
 
-    me.mxc_dsi_ic_active = Ext.create('Ext.form.field.Checkbox', {
-      name: 'attribute[mxc_dsi_ic_active]',
+    me.mxcbc_dsi_ic_active = Ext.create('Ext.form.field.Checkbox', {
+      name: 'attribute[mxcbc_dsi_ic_active]',
       fieldLabel: 'Aktivieren',
       inputValue: true,
       uncheckedValue: false,
       labelWidth: 155
     });
 
-    me.mxc_dsi_ic_productnumber = Ext.create('Ext.form.field.Text', {
-      name: 'attribute[mxc_dsi_ic_productnumber]',
+    me.mxcbc_dsi_ic_productnumber = Ext.create('Ext.form.field.Text', {
+      name: 'attribute[mxcbc_dsi_ic_productnumber]',
       fieldLabel: 'Artikelnummer',
       labelWidth: 155
     });
 
-    me.mxc_dsi_ic_purchaseprice = Ext.create('Ext.form.field.Text', {
-      name: 'attribute[mxc_dsi_ic_purchaseprice]',
+    me.mxcbc_dsi_ic_purchaseprice = Ext.create('Ext.form.field.Text', {
+      name: 'attribute[mxcbc_dsi_ic_purchaseprice]',
       readOnly: true,
       fieldLabel: 'Einkaufspreis',
       labelWidth: 155
     });
 
-    me.mxc_dsi_ic_instock = Ext.create('Ext.form.field.Text', {
-      name: 'attribute[mxc_dsi_ic_instock]',
+    me.mxcbc_dsi_ic_instock = Ext.create('Ext.form.field.Text', {
+      name: 'attribute[mxcbc_dsi_ic_instock]',
       decimalPrecision: 0,
       readOnly: true,
       fieldLabel: 'Bestand',
       labelWidth: 155
     });
 
-    me.mxc_dsi_ic_preferownstock = Ext.create('Ext.form.field.Checkbox', {
-      name: 'attribute[mxc_dsi_ic_preferownstock]',
+    me.mxcbc_dsi_ic_preferownstock = Ext.create('Ext.form.field.Checkbox', {
+      name: 'attribute[mxcbc_dsi_ic_preferownstock]',
       fieldLabel: 'Eigenes Lager bevorzugen',
       inputValue: true,
       uncheckedValue: false,
       labelWidth: 155
     });
 
-    me.mxc_dsi_ic_productname = Ext.create('Ext.form.field.Text', {
-      name: 'attribute[mxc_dsi_ic_productname]',
+    me.mxcbc_dsi_ic_productname = Ext.create('Ext.form.field.Text', {
+      name: 'attribute[mxcbc_dsi_ic_productname]',
       readOnly: true,
       fieldLabel: 'Artikelbezeichnung',
       labelWidth: 155,
       width: 450
     });
 
-    me.mxc_dsi_ic_retailprice = Ext.create('Ext.form.field.Text', {
-      name: 'attribute[mxc_dsi_ic_retailprice]',
+    me.mxcbc_dsi_ic_retailprice = Ext.create('Ext.form.field.Text', {
+      name: 'attribute[mxcbc_dsi_ic_retailprice]',
       readOnly: true,
       fieldLabel: 'Unverbindliche Preisempfehlung',
       labelWidth: 155
@@ -148,7 +148,7 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base', {
   createButtons: function() {
     let me = this;
 
-    me.mxc_dsi_ic_savebutton = Ext.create('Ext.button.Button', {
+    me.mxcbc_dsi_ic_savebutton = Ext.create('Ext.button.Button', {
       text: 'Übernehmen',
       cls: 'primary',
       style : {
@@ -158,16 +158,16 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base', {
         click: function(editor, e) {
           let params = {
             detailId: me.detailId,
-            productNumber: me.mxc_dsi_ic_productnumber.getValue(),
-            active: me.mxc_dsi_ic_active.getValue() ? 1 : 0,
-            preferOwnStock: me.mxc_dsi_ic_preferownstock.getValue() ? 1 : 0,
+            productNumber: me.mxcbc_dsi_ic_productnumber.getValue(),
+            active: me.mxcbc_dsi_ic_active.getValue() ? 1 : 0,
+            preferOwnStock: me.mxcbc_dsi_ic_preferownstock.getValue() ? 1 : 0,
           };
           me.onMxcDsiInnocigsRegister(params);
         }
       }
     });
 
-    me.mxc_dsi_ic_removebutton = Ext.create('Ext.button.Button', {
+    me.mxcbc_dsi_ic_removebutton = Ext.create('Ext.button.Button', {
       text: 'Löschen',
       cls: 'secondary',
       style : {
@@ -176,7 +176,7 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base', {
       listeners: {
         click: function(editor, e) {
 
-          let productNumber = me.mxc_dsi_ic_productnumber.getValue();
+          let productNumber = me.mxcbc_dsi_ic_productnumber.getValue();
           if (productNumber === '') return;
           if (me.detailId == null) {
             Shopware.Notification.createGrowlMessage('Fehler', 'Sie haben einen neuen Artikel angelegt aber nicht nicht gespeichert. Sie können einen Dropshipping-Artikel erst hinzufügen, sobald Sie den Artikel gespeichert haben.', 'MxcDropshipInnocigs');
@@ -218,15 +218,15 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base', {
         } else {
           let overwritePurchaseprice = true;
           if (overwritePurchaseprice) {
-            document.getElementsByName('mainDetail[purchasePrice]')[0].value = response.datamxc_dsi_ic_purchaseprice;
+            document.getElementsByName('mainDetail[purchasePrice]')[0].value = response.datamxcbc_dsi_ic_purchaseprice;
           }
 
-          me.mxc_dsi_ic_productname.setValue(response.data.mxc_dsi_ic_productname);
-          me.mxc_dsi_ic_purchaseprice.setValue(response.data.mxc_dsi_ic_purchaseprice);
-          me.mxc_dsi_ic_retailprice.setValue(response.data.mxc_dsi_ic_retailprice);
-          me.mxc_dsi_ic_instock.setValue(response.data.mxc_dsi_ic_instock);
-          me.mxc_dsi_ic_active.setValue(response.data.mxc_dsi_ic_active);
-          me.mxc_dsi_ic_preferownstock.setValue(response.data.mxc_dsi_ic_preferownstock);
+          me.mxcbc_dsi_ic_productname.setValue(response.data.mxcbc_dsi_ic_productname);
+          me.mxcbc_dsi_ic_purchaseprice.setValue(response.data.mxcbc_dsi_ic_purchaseprice);
+          me.mxcbc_dsi_ic_retailprice.setValue(response.data.mxcbc_dsi_ic_retailprice);
+          me.mxcbc_dsi_ic_instock.setValue(response.data.mxcbc_dsi_ic_instock);
+          me.mxcbc_dsi_ic_active.setValue(response.data.mxcbc_dsi_ic_active);
+          me.mxcbc_dsi_ic_preferownstock.setValue(response.data.mxcbc_dsi_ic_preferownstock);
           Shopware.Notification.createGrowlMessage('Erfolg', 'Dropship erfolgreich registriert.', 'MxcDropshipInnocigs');
         }
       },
@@ -249,13 +249,13 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base', {
         let response = Ext.JSON.decode(responseData.responseText);
         me.mainWindow.setLoading(false);
 
-        me.mxc_dsi_ic_active.setValue(0);
-        me.mxc_dsi_ic_preferownstock.setValue(0);
-        me.mxc_dsi_ic_productnumber.setValue('');
-        me.mxc_dsi_ic_productname.setValue('');
-        me.mxc_dsi_ic_purchaseprice.setValue('');
-        me.mxc_dsi_ic_retailprice.setValue('');
-        me.mxc_dsi_ic_instock.setValue('');
+        me.mxcbc_dsi_ic_active.setValue(0);
+        me.mxcbc_dsi_ic_preferownstock.setValue(0);
+        me.mxcbc_dsi_ic_productnumber.setValue('');
+        me.mxcbc_dsi_ic_productname.setValue('');
+        me.mxcbc_dsi_ic_purchaseprice.setValue('');
+        me.mxcbc_dsi_ic_retailprice.setValue('');
+        me.mxcbc_dsi_ic_instock.setValue('');
 
         Shopware.Notification.createGrowlMessage('Erfolgreich', 'Dropship Konfiguration für InnoCigs gelöscht.', 'MxcDropshipInnocigs');
       },
@@ -274,13 +274,13 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base', {
       success: function(responseData, request) {
         let response = Ext.JSON.decode(responseData.responseText);
         if (response.success) {
-          me.mxc_dsi_ic_active.setValue(response.data.mxc_dsi_ic_active);
-          me.mxc_dsi_ic_preferownstock.setValue(response.data.mxc_dsi_ic_preferownstock);
-          me.mxc_dsi_ic_productnumber.setValue(response.data.mxc_dsi_ic_productnumber);
-          me.mxc_dsi_ic_productname.setValue(response.data.mxc_dsi_ic_productname);
-          me.mxc_dsi_ic_purchaseprice.setValue(response.data.mxc_dsi_ic_purchaseprice);
-          me.mxc_dsi_ic_retailprice.setValue(response.data.mxc_dsi_ic_retailprice);
-          me.mxc_dsi_ic_instock.setValue(response.data.mxc_dsi_ic_instock);
+          me.mxcbc_dsi_ic_active.setValue(response.data.mxcbc_dsi_ic_active);
+          me.mxcbc_dsi_ic_preferownstock.setValue(response.data.mxcbc_dsi_ic_preferownstock);
+          me.mxcbc_dsi_ic_productnumber.setValue(response.data.mxcbc_dsi_ic_productnumber);
+          me.mxcbc_dsi_ic_productname.setValue(response.data.mxcbc_dsi_ic_productname);
+          me.mxcbc_dsi_ic_purchaseprice.setValue(response.data.mxcbc_dsi_ic_purchaseprice);
+          me.mxcbc_dsi_ic_retailprice.setValue(response.data.mxcbc_dsi_ic_retailprice);
+          me.mxcbc_dsi_ic_instock.setValue(response.data.mxcbc_dsi_ic_instock);
         }
       }
     });

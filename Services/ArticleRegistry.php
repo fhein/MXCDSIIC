@@ -10,6 +10,7 @@ use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
 use MxcCommons\Toolbox\Strings\StringTool;
 use MxcDropshipInnocigs\Exception\InvalidArgumentException;
 use MxcDropshipIntegrator\Dropship\ArticleRegistryInterface;
+use MxcDropshipIntegrator\Dropship\DropshipManager;
 use MxcDropshipIntegrator\Models\Variant;
 
 class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterface, ArticleRegistryInterface
@@ -23,15 +24,15 @@ class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterfac
     const ERROR_INVALID_ARGUMENT        = 3;
 
     private $fields = [
-        'mxc_dsi_ic_registered'     => false,
-        'mxc_dsi_ic_status'         => null,
-        'mxc_dsi_ic_active'         => null,
-        'mxc_dsi_ic_preferownstock' => null,
-        'mxc_dsi_ic_productnumber'  => null,
-        'mxc_dsi_ic_productname'    => null,
-        'mxc_dsi_ic_purchaseprice'  => null,
-        'mxc_dsi_ic_retailprice'    => null,
-        'mxc_dsi_ic_instock'        => null,
+        'mxcbc_dsi_ic_registered'     => false,
+        'mxcbc_dsi_ic_status'         => null,
+        'mxcbc_dsi_ic_active'         => null,
+        'mxcbc_dsi_ic_delivery' => null,
+        'mxcbc_dsi_ic_productnumber'  => null,
+        'mxcbc_dsi_ic_productname'    => null,
+        'mxcbc_dsi_ic_purchaseprice'  => null,
+        'mxcbc_dsi_ic_retailprice'    => null,
+        'mxcbc_dsi_ic_instock'        => null,
     ];
 
     private $select;
@@ -65,22 +66,21 @@ class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterfac
         if (! $detail) return;
 
         $data = [
-            'mxc_dsi_ic_productnumber'  => $variant->getIcNumber(),
-            'mxc_dsi_ic_productname'    => $variant->getName(),
-            'mxc_dsi_ic_purchaseprice'  => $variant->getPurchasePrice(),
-            'mxc_dsi_ic_retailprice'    => round($variant->getRecommendedRetailPrice(), 2),
-            'mxc_dsi_ic_instock'        => $stockInfo[$variant->getIcNumber()] ?? 0,
-            'mxc_dsi_ic_preferownstock' => false,
-            'mxc_dsi_ic_active'         => true,
-            'mxc_dsi_ic_status'         => ArticleRegistry::NO_ERROR,
-            'mxc_dsi_ic_registered'     => true,
+            'mxcbc_dsi_ic_productnumber'  => $variant->getIcNumber(),
+            'mxcbc_dsi_ic_productname'    => $variant->getName(),
+            'mxcbc_dsi_ic_purchaseprice'  => $variant->getPurchasePrice(),
+            'mxcbc_dsi_ic_retailprice'    => round($variant->getRecommendedRetailPrice(), 2),
+            'mxcbc_dsi_ic_instock'        => $stockInfo[$variant->getIcNumber()] ?? 0,
+            'mxcbc_dsi_ic_delivery'       => DropshipManager::DELIVERY_DROPSHIP_ONLY,
+            'mxcbc_dsi_ic_active'         => true,
+            'mxcbc_dsi_ic_status'         => ArticleRegistry::NO_ERROR,
+            'mxcbc_dsi_ic_registered'     => true,
         ];
         $this->updateSettings($detail->getId(), $data);
-
     }
 
 
-    public function register(int $detailId, string $productNumber, bool $active, bool $preferOwnStock)
+    public function register(int $detailId, string $productNumber, bool $active, int $delivery)
     {
         if (empty($productNumber)) return [self::ERROR_INVALID_ARGUMENT, $this->fields];
 
@@ -97,15 +97,15 @@ class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterfac
 
         $info = $info[$productNumber];
         $data = [
-            'mxc_dsi_ic_productnumber'  => $info['model'],
-            'mxc_dsi_ic_productname'    => $info['name'],
-            'mxc_dsi_ic_purchaseprice'  => StringTool::toFloat($info['purchasePrice']),
-            'mxc_dsi_ic_retailprice'    => StringTool::toFloat($info['recommendedRetailPrice']),
-            'mxc_dsi_ic_instock'        => $this->client->getStockInfo($productNumber),
-            'mxc_dsi_ic_preferownstock' => $preferOwnStock,
-            'mxc_dsi_ic_active'         => $active,
-            'mxc_dsi_ic_status'         => self::NO_ERROR,
-            'mxc_dsi_ic_registered'     => true,
+            'mxcbc_dsi_ic_productnumber'  => $info['model'],
+            'mxcbc_dsi_ic_productname'    => $info['name'],
+            'mxcbc_dsi_ic_purchaseprice'  => StringTool::toFloat($info['purchasePrice']),
+            'mxcbc_dsi_ic_retailprice'    => StringTool::toFloat($info['recommendedRetailPrice']),
+            'mxcbc_dsi_ic_instock'        => $this->client->getStockInfo($productNumber),
+            'mxcbc_dsi_ic_delivery'       => $delivery,
+            'mxcbc_dsi_ic_active'         => $active,
+            'mxcbc_dsi_ic_status'         => self::NO_ERROR,
+            'mxcbc_dsi_ic_registered'     => true,
         ];
 
         $this->updateSettings($detailId, $data);

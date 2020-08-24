@@ -6,26 +6,71 @@ use RuntimeException;
 
 class DropshipOrderException extends RuntimeException
 {
-    const PRODUCT_NOT_AVAILABLE     = 2001;
-    const PRODUCT_UNKNOWN           = 2002;
-    const PRODUCT_NUMBER_MISSING    = 2003;
-    const PRODUCT_OUT_OF_STOCK      = 2004;
-    const POSITION_EXCEEDS_STOCK    = 2005;
-    const RECIPIENT_ADDRESS_ERROR   = 2006;
-    const POSITIONS_ERROR           = 2007;
-    const API_EXCEPTION             = 2008;
-    const INNOCIGS_ERRORS           = 2009;
-    const DROPSHIP_NOK              = 2010;
+    // will be thrown by DropshipOrder
+    // catch and and query previous to access and handle the ApiException
+    const API_EXCEPTION             = 2000;
+
+    // will be thrown by DropshipOrder
+    // catch and query the position detail via getPositions() on the DropshipOrderException
+    const POSITIONS_ERROR           = 3000;
+
+    // these will not be thrown
+    // the positions hold an error code $position['CODE'] and error message $position['MESSAGE']
+    const PRODUCT_NOT_AVAILABLE     = 3001;
+    const PRODUCT_UNKNOWN           = 3002;
+    const PRODUCT_NUMBER_MISSING    = 3003;
+    const PRODUCT_OUT_OF_STOCK      = 3004;
+    const POSITION_EXCEEDS_STOCK    = 3005;
+
+    // will be thrown by DropshipOrder
+    // catch and query the validation error messages via getAddress errors
+    const RECIPIENT_ADDRESS_ERROR   = 4000;
+
+    // these will not get thrown
+    // getAddress() returns an array ['CODE' => one of these, 'MESSAGE' => the according message ]
+    const RECIPIENT_COMPANY_TOO_LONG            = 4001;
+    const RECIPIENT_COMPANY2_TOO_LONG           = 4002;
+    const RECIPIENT_FIRST_NAME_TOO_SHORT        = 4003;
+    const RECIPIENT_LAST_NAME_TOO_SHORT         = 4004;
+    const RECIPIENT_NAME_TOO_LONG               = 4005;
+    const RECIPIENT_STREET_ADDRESS_TOO_SHORT    = 4006;
+    const RECIPIENT_STREET_ADDRESS_TOO_LONG     = 4007;
+    const RECIPIENT_ZIP_TOO_SHORT               = 4008;
+    const RECIPIENT_CITY_TOO_SHORT              = 4009;
+
+    // will be thrown by DropshipOrderException
+    const INNOCIGS_ERROR = 5000;
+    // will be thrown by DropshipOrderException
+    const DROPSHIP_NOK   = 6000;
+
+    protected static $addressErrorMessages = [
+        self::RECIPIENT_COMPANY_TOO_LONG         => 'Der Firmenname darf maximal 30 Zeichen lang sein.',
+        self::RECIPIENT_COMPANY2_TOO_LONG        => 'Der Firmenname 2 darf maximal 30 Zeichen lang sein.',
+        self::RECIPIENT_FIRST_NAME_TOO_SHORT     => 'Der Vorname muss mindestens aus zwei Zeichen bestehen.',
+        self::RECIPIENT_LAST_NAME_TOO_SHORT      => 'Der Nachname muss mindestens aus zwei Zeichen bestehen.',
+        self::RECIPIENT_NAME_TOO_LONG            => 'Vorname und Nachname dürfen zusammen nicht mehr als 34 Zeichen enthalten.',
+        self::RECIPIENT_STREET_ADDRESS_TOO_SHORT => 'Die Straße mit Hausnummer muss mindestens aus fünf Zeichen bestehen.',
+        self::RECIPIENT_STREET_ADDRESS_TOO_LONG  => 'Die Straße mit Hausnummer darf höchstens aus 35 Zeichen bestehen.',
+        self::RECIPIENT_ZIP_TOO_SHORT            => 'Die Postleitzahl muss mindestens aus vier Zeichen bestehen.',
+        self::RECIPIENT_CITY_TOO_SHORT           => 'Die Stadt muss mindestens aus drei Zeichen bestehen.',
+    ];
 
     private $addressErrors = [];
     private $positions = [];
     private $dropshipInfo = [];
     private $innocigsErrors = [];
 
-    public static function fromInvalidRecipientAdress(array $errors)
+    public static function fromInvalidRecipientAddress(array $err)
     {
         $msg = 'Invalid recipient address.';
         $e = new self($msg, self::RECIPIENT_ADDRESS_ERROR);
+
+        foreach ($err as $error) {
+            $errors[] = [
+                'CODE' => $error,
+                'MESSAGE' => self::$addressErrorMessages[$error],
+            ];
+        }
         $e->setAddressErrors($errors);
         return $e;
     }
@@ -47,9 +92,9 @@ class DropshipOrderException extends RuntimeException
 
     public static function fromInnocigsErrors(array $errors)
     {
-        $code = self::INNOCIGS_ERRORS;
+        $code = self::INNOCIGS_ERROR;
         $msg = 'InnoCigs API error codes available.';
-        $e =  new ApiException($msg, $code);
+        $e =  new DropshipOrderException($msg, $code);
         $e->setInnocigsErrors($errors);
         return $e;
     }
@@ -58,7 +103,7 @@ class DropshipOrderException extends RuntimeException
     {
         $code = self::DROPSHIP_NOK;
         $msg = 'InnoCigs API error codes available.';
-        $e =  new ApiException($msg, $code);
+        $e =  new DropshipOrderException($msg, $code);
         $e->setInnocigsErrors($errors);
         $e->setDropshipInfo($info);
         return $e;
@@ -66,16 +111,7 @@ class DropshipOrderException extends RuntimeException
 
     public function setInnocigsErrors(array $errors)
     {
-        // a single error was returned
-        if (isset($errors['ERROR']['CODE'])) {
-            $this->innocigsErrors[] = $errors['ERROR'];
-            return;
-        }
-        // multiple errors were returned
-        foreach ($errors['ERROR'] as $error)
-        {
-            $this->innocigsErrors[] = $error;
-        }
+        $this->innocigsErrors = $errors;
     }
 
     public function getInnocigsErrors()
@@ -97,7 +133,7 @@ class DropshipOrderException extends RuntimeException
         $this->positions = $positions;
     }
 
-    public function getPositions(array $positions) {
+    public function getPositions() {
         return $this->positions;
     }
 

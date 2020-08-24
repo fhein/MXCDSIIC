@@ -74,7 +74,7 @@ class StockUpdateCronJob implements SubscriberInterface
         foreach ($details as $detail) {
             $detailId = $detail->getId();
             $settings = $registry->getSettings($detailId);
-            $productNumber = $settings['mxc_dsi_ic_productnumber'];
+            $productNumber = $settings['mxcbc_dsi_ic_productnumber'];
             if (empty($productNumber)) continue;
 
             if ($info[$productNumber] === null) {
@@ -89,9 +89,9 @@ class StockUpdateCronJob implements SubscriberInterface
             }
 
             // vapee dropship attributes
-            $settings['mxc_dsi_ic_purchaseprice'] = $purchasePrice;
-            $settings['mxc_dsi_ic_retailprice'] = $retailPrice;
-            $settings['mxc_dsi_ic_instock'] = $instock;
+            $settings['mxcbc_dsi_ic_purchaseprice'] = $purchasePrice;
+            $settings['mxcbc_dsi_ic_retailprice'] = $retailPrice;
+            $settings['mxcbc_dsi_ic_instock'] = $instock;
             $registry->updateSettings($detailId, $settings);
 
             // For now we override shopware's purchase price @todo: Configurable?
