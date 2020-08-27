@@ -6,19 +6,21 @@ use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use MxcCommons\Plugin\Database\SchemaManager;
 use MxcCommons\Defines\Constants;
-use MxcCommons\Plugin\Service\ClassConfigAwareInterface;
 use MxcCommons\Plugin\Service\ClassConfigAwareTrait;
-use MxcCommons\Plugin\Service\LoggerAwareInterface;
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
-use MxcCommons\Plugin\Service\ModelManagerAwareInterface;
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
+use MxcCommons\ServiceManager\AugmentedObject;
 use MxcCommons\Toolbox\Arrays\ArrayTool;
 use MxcDropshipInnocigs\Models\Model;
+use MxcDropshipInnocigs\Xml\HttpReader;
+use MxcDropshipInnocigs\Xml\XmlReader;
+use MxcDropshipInnocigs\Xml\ResponseToArray;
+use MxcDropshipIntegrator\Dropship\ImportClientInterface;
 use MxcDropshipIntegrator\Models\Variant;
 use MxcCommons\Toolbox\Report\ArrayReport;
 use RuntimeException;
 
-class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelManagerAwareInterface, LoggerAwareInterface
+class ImportClient implements ImportClientInterface, EventSubscriber, AugmentedObject
 {
     use ClassConfigAwareTrait;
     use ModelManagerAwareTrait;
@@ -30,8 +32,11 @@ class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelM
     /** @var ApiClient $apiClient */
     protected $apiClient;
 
-    /** @var ApiClientSequential $apiClientSequential */
-    protected $apiClientSeq;
+    /** @var XmlReader  */
+    protected $xmlReader;
+
+    /** @var HttpReader */
+    protected $httpReader;
 
     /** @var array $import */
     protected $import;
@@ -59,21 +64,19 @@ class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelM
     /** @var ArrayReport */
     protected $reporter;
 
-    /**
-     * ImportClient constructor.
-     *
-     * @param SchemaManager $schemaManager
-     * @param ApiClient $apiClient
-     * @param ApiClientSequential $apiClientSeq
-     */
+    /** @var ResponseToArray $rta */
+    protected $rta;
+
     public function __construct(
         SchemaManager $schemaManager,
         ApiClient $apiClient,
-        ApiClientSequential $apiClientSeq
+        XmlReader $xmlReader,
+        HttpReader $httpReader
     ) {
         $this->schemaManager = $schemaManager;
         $this->apiClient = $apiClient;
-        $this->apiClientSeq = $apiClientSeq;
+        $this->xmlReader = $xmlReader;
+        $this->httpReader = $httpReader;
         $this->reporter = new ArrayReport();
         $model = new Model();
         $this->fields = $model->getPrivatePropertyNames();
@@ -92,50 +95,34 @@ class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelM
         return ['preUpdate'];
     }
 
-    public function importFromXml(string $xml, bool $recreateSchema = false)
-    {
-        $this->import = $this->apiClient->modelsToArray($xml);
-
-        if ($recreateSchema) {
-            $this->schemaManager->drop();
-            $this->schemaManager->create();
-        }
-        return $this->doImport();
-    }
-    public function importFromXmlSequential(string $xmlFile, bool $recreateSchema = false)
-    {
-        $this->import = $this->apiClientSeq->getItemListfromFile($xmlFile);
-
-        if ($recreateSchema) {
-            $this->schemaManager->drop();
-            $this->schemaManager->create();
-        }
+    public function importFromApi(bool $includeDescriptions, bool $sequential, bool $recreateSchema = false) {
+        $this->recreateSchema($recreateSchema);
+        $this->import = $this->apiClient->getProducts(false, $includeDescriptions, $sequential);
         return $this->doImport();
     }
 
-    public function importFromFile(string $xmlFile = null, bool $recreateSchema = false)
+    public function importFromXml(string $xml, bool $sequential, bool $recreateSchema = false)
     {
+        $this->recreateSchema($recreateSchema);
+        $this->import = $sequential
+            ? $this->xmlReader->readModelsFromUri($xml, false)
+            : $this->httpReader->readModelsFromXml($xml, false);
+
+        return $this->doImport();
+    }
+
+    public function importFromFile(string $xmlFile, bool $sequential, bool $recreateSchema = false)
+    {
+        $this->recreateSchema($recreateSchema);
+
         if (! file_exists($xmlFile)) {
             throw new RuntimeException('File does not exist: ' . $xmlFile);
         }
-        return $this->importFromXml(file_get_contents($xmlFile), $recreateSchema);
-    }
 
-    public function importFromFileSequential(string $xmlFile = null, bool $recreateSchema = false)
-    {
-        if (! file_exists($xmlFile)) {
-            throw new RuntimeException('File does not exist: ' . $xmlFile);
-        }
-        return $this->importFromXmlSequential($xmlFile, $recreateSchema);
-    }
+        $this->import = $sequential
+            ? $this->xmlReader->readModelsFromUri($xmlFile, false)
+            : $this->httpReader->readModelsFromXml(file_get_contents($xmlFile), false);
 
-    public function import(bool $includeDescriptions) {
-        $this->import = $this->apiClient->getItemList(false, $includeDescriptions);
-        return $this->doImport();
-    }
-
-    public function importSequential(bool $includeDesriptions) {
-        $this->import = $this->apiClientSeq->getItemList($includeDesriptions);
         return $this->doImport();
     }
 
@@ -355,7 +342,6 @@ class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelM
 
     public function preUpdate(PreUpdateEventArgs $args)
     {
-        /** @var PreUpdateEventArgs $args */
         $model = $args->getEntity();
         if (!$model instanceof Model) {
             return;
@@ -396,5 +382,12 @@ class ImportClient implements EventSubscriber, ClassConfigAwareInterface, ModelM
         ];
 
         ($this->reporter)($topics);
+    }
+
+    protected function recreateSchema(bool $recreateSchema) {
+        if ($recreateSchema) {
+            $this->schemaManager->drop();
+            $this->schemaManager->create();
+        }
     }
 }

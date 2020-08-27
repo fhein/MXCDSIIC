@@ -12,12 +12,9 @@ class ApiException extends RuntimeException {
     const JSON_ENCODE       = 1002;
     const INVALID_XML_DATA  = 1003;
     const HTTP_STATUS       = 1004;
+    const INNOCIGS_ERRORS   = 1005;
 
-    // will be thrown by ApiException
-    // get the error list via ApiException->getInnocigsErrors()
-    const INNOCIGS_ERRORS   = 1004;
-
-    // InnoCigs API errors, will not be thrown by ApiException
+    // InnoCigs API errors will not be thrown by ApiException
     // this is a list of all InnoCigs errors, error message provided by InnoCigs
     //
     const LOGIN_FAILED                  = 10000;

@@ -2,17 +2,62 @@
 
 namespace MxcDropshipInnocigs\Services;
 
-use MxcCommons\Log\LoggerAwareInterface;
 use MxcCommons\Log\LoggerAwareTrait;
+use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropshipInnocigs\Exception\ApiException;
 use MxcDropshipInnocigs\Exception\DropshipOrderException;
+use MxcDropshipIntegrator\Dropship\DropshipLogger;
 
-class OrderErrorHandler implements LoggerAwareInterface
+class OrderErrorHandler implements AugmentedObject
 {
     use LoggerAwareTrait;
 
+    const ORDER_HALT = 1;
+    const ORDER_RETRY = 2;
+
+    protected $errorResponses = [
+        ApiException::NO_RESPONSE => [
+            'message'           => 'InnoCigs server does not respond. Order not transmitted. Will attempt again.',
+            'severity'          => DropshipLogger::ERR,
+            'action'            => self::ORDER_RETRY,
+        ],
+        ApiException::JSON_ENCODE => [
+            'message'           => 'Failed to decode response from InnoCigs. Order status unknown. Please contact InnoCigs. Order halted.',
+            'severity'          => DropshipLogger::ERR,
+            'action'            => self::ORDER_RETRY,
+        ],
+        ApiException::INVALID_XML_DATA => [
+            'message'           => 'InnoCigs response is malformed and invalid XML. Order status unknown. Please contact InnoCigs. Order halted.',
+            'severity'          => DropshipLogger::ERR,
+            'action'            => self::ORDER_RETRY,
+        ],
+        ApiException::HTTP_STATUS => [
+            'message'           => 'API call failed. InnoCigs HTTP status: %s. Order not transmitted. Will attempt again.',
+            'severity'          => DropshipLogger::ERR,
+            'action'            => self::ORDER_RETRY,
+        ]
+    ];
+
+    /** @var DropshipOrder */
+    protected $dropshipOrder;
+
+    /** @var DropshipLogger */
+    protected $dropshipLog;
+
+    /** @var array  */
+    protected $order = [];
+
+    public function __construct(DropshipOrder $dropshipOrder, DropshipLogger $dropshipLog)
+    {
+        $this->dropshipLog = $dropshipLog;
+        // note: because DropshipOrder is a shared service it will hold the last state
+        // when handleOrderException() is called
+        $this->dropshipOrder = $dropshipOrder;
+    }
+
     public function handleOrderException(DropshipOrderException $e, array $order)
     {
+        $this->order = $order;
         switch ($e->getCode()) {
             case DropshipOrderException::INNOCIGS_ERROR:
                 $errors = $e->getInnocigsErrors();
@@ -34,10 +79,39 @@ class OrderErrorHandler implements LoggerAwareInterface
                 break;
             default:
                 // we cover all cases, so this is just sanitary
-                throw($e);
-                break;
+                throw $e;
+        }
+    }
+
+    protected function handleApiException(ApiException $e)
+    {
+        $code = $e->getCode();
+        $response = $this->errorResponses[$code];
+
+        // if the code is HTTP status we have to sprintf the HTTP status to the log message
+        if ($code === ApiException::HTTP_STATUS) {
+            $response['message'] = sprintf($response['message'], $e->getHttpStatus());
         }
 
+        $this->log($response);
+    }
+
+    // note: this is a draft for logging without position data;
+    protected function log(array $response)
+    {
+        $this->dropshipLog->log(
+            $response['severity'],
+            'InnoCigs',
+            $response['message'],
+            $this->order['ordernumber']
+        );
+
+    }
+
+}
+
+//   Dropshipper's companion junk
+//
 //        if (isset($dropshipInfo['ERRORS']['ERROR'])) {
 //            $errorCodeListForEmail .= 'Bestellnummer: ' . $fullOrder['ordernumber'] . PHP_EOL . 'ErrorCode: ' . $dropshipInfo['ERRORS']['ERROR']['CODE'] . PHP_EOL . $dropshipInfo['ERRORS']['ERROR']['MESSAGE'] . PHP_EOL . '------' . PHP_EOL;
 //            $processedOrderNumbers .= 'NOK: ' . $fullOrder['ordernumber'] . PHP_EOL;
@@ -67,24 +141,3 @@ class OrderErrorHandler implements LoggerAwareInterface
 //            }
 //
 //        }
-    }
-
-    protected function handleApiException(ApiException $e)
-    {
-        $errors = [];
-        switch($e->getCode()) {
-            case ApiException::NO_RESPONSE:
-                break;
-            case ApiException::JSON_DECODE:
-                break;
-            case ApiException::JSON_ENCODE:
-                break;
-            case ApiException::INVALID_XML_DATA:
-                break;
-            case ApiException::HTTP_STATUS:
-                break;
-        }
-        return $errors;
-    }
-
-}

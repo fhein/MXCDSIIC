@@ -12,36 +12,36 @@ class DropshipOrderException extends RuntimeException
 
     // will be thrown by DropshipOrder
     // catch and query the position detail via getPositions() on the DropshipOrderException
-    const POSITIONS_ERROR           = 3000;
+    const POSITIONS_ERROR           = 2100;
 
     // these will not be thrown
     // the positions hold an error code $position['CODE'] and error message $position['MESSAGE']
-    const PRODUCT_NOT_AVAILABLE     = 3001;
-    const PRODUCT_UNKNOWN           = 3002;
-    const PRODUCT_NUMBER_MISSING    = 3003;
-    const PRODUCT_OUT_OF_STOCK      = 3004;
-    const POSITION_EXCEEDS_STOCK    = 3005;
+    const PRODUCT_NOT_AVAILABLE     = 2101;
+    const PRODUCT_UNKNOWN           = 2102;
+    const PRODUCT_NUMBER_MISSING    = 2103;
+    const PRODUCT_OUT_OF_STOCK      = 2104;
+    const POSITION_EXCEEDS_STOCK    = 2105;
 
     // will be thrown by DropshipOrder
     // catch and query the validation error messages via getAddress errors
-    const RECIPIENT_ADDRESS_ERROR   = 4000;
+    const RECIPIENT_ADDRESS_ERROR   = 2200;
 
     // these will not get thrown
     // getAddress() returns an array ['CODE' => one of these, 'MESSAGE' => the according message ]
-    const RECIPIENT_COMPANY_TOO_LONG            = 4001;
-    const RECIPIENT_COMPANY2_TOO_LONG           = 4002;
-    const RECIPIENT_FIRST_NAME_TOO_SHORT        = 4003;
-    const RECIPIENT_LAST_NAME_TOO_SHORT         = 4004;
-    const RECIPIENT_NAME_TOO_LONG               = 4005;
-    const RECIPIENT_STREET_ADDRESS_TOO_SHORT    = 4006;
-    const RECIPIENT_STREET_ADDRESS_TOO_LONG     = 4007;
-    const RECIPIENT_ZIP_TOO_SHORT               = 4008;
-    const RECIPIENT_CITY_TOO_SHORT              = 4009;
+    const RECIPIENT_COMPANY_TOO_LONG            = 2201;
+    const RECIPIENT_COMPANY2_TOO_LONG           = 2202;
+    const RECIPIENT_FIRST_NAME_TOO_SHORT        = 2203;
+    const RECIPIENT_LAST_NAME_TOO_SHORT         = 2204;
+    const RECIPIENT_NAME_TOO_LONG               = 2205;
+    const RECIPIENT_STREET_ADDRESS_TOO_SHORT    = 2206;
+    const RECIPIENT_STREET_ADDRESS_TOO_LONG     = 2207;
+    const RECIPIENT_ZIP_TOO_SHORT               = 2208;
+    const RECIPIENT_CITY_TOO_SHORT              = 2209;
 
     // will be thrown by DropshipOrderException
-    const INNOCIGS_ERROR = 5000;
+    const INNOCIGS_ERROR = 2300;
     // will be thrown by DropshipOrderException
-    const DROPSHIP_NOK   = 6000;
+    const DROPSHIP_NOK   = 2400;
 
     protected static $addressErrorMessages = [
         self::RECIPIENT_COMPANY_TOO_LONG         => 'Der Firmenname darf maximal 30 Zeichen lang sein.',

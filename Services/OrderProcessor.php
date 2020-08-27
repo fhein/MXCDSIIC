@@ -2,18 +2,15 @@
 
 namespace MxcDropshipInnocigs\Services;
 
-use MxcCommons\Log\LoggerAwareInterface;
 use MxcCommons\Log\LoggerAwareTrait;
-use MxcCommons\Plugin\Service\DatabaseAwareInterface;
 use MxcCommons\Plugin\Service\DatabaseAwareTrait;
-use MxcCommons\Plugin\Service\ModelManagerAwareInterface;
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
-use MxcDropshipInnocigs\Exception\ApiException;
+use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropshipInnocigs\Exception\DropshipOrderException;
+use MxcDropshipIntegrator\Dropship\DropshipLogger;
 use MxcDropshipIntegrator\Dropship\DropshipManager;
-use Shopware\Models\Order\Status;
 
-class OrderProcessor implements ModelManagerAwareInterface, DatabaseAwareInterface, LoggerAwareInterface
+class OrderProcessor implements AugmentedObject
 {
     use ModelManagerAwareTrait;
     use DatabaseAwareTrait;
@@ -26,10 +23,14 @@ class OrderProcessor implements ModelManagerAwareInterface, DatabaseAwareInterfa
     /** @var OrderErrorHandler*/
     protected $errorHandler;
 
-    public function __construct(DropshipOrder $dropshipOrder, OrderErrorHandler $errorHandler)
+    /** @var DropshipLogger */
+    protected $dropshipLog;
+
+    public function __construct(DropshipOrder $dropshipOrder, DropshipLogger $dropshipLog, OrderErrorHandler $errorHandler)
     {
         $this->dropshipOrder = $dropshipOrder;
         $this->errorHandler = $errorHandler;
+        $this->dropshipLog = $dropshipLog;
     }
 
     // The $order array describes a new order which is paid, so drophip order needs to get send
@@ -41,25 +42,25 @@ class OrderProcessor implements ModelManagerAwareInterface, DatabaseAwareInterfa
         $shippingAddress = $this->getShippingAddress($orderId);
 
         // get all order positions which are scheduled for InnoCigs
-        $dropshipPositions = $this->getOrderPositions($details);
-        if (empty($dropshipPositions)) {
+        $positions = $this->getOrderPositions($details);
+        if (empty($positions)) {
             return [ DropshipManager::NO_ERROR, []];
         }
 
         try {
             // throws if the shipping address does not comply to the InnoCigs address spec
-            $this->dropshipOrder->create($order['ordernumber'], $shippingAddress);
-            foreach ($dropshipPositions as $position) {
+            $this->dropshipOrder->create($shippingAddress);
+            foreach ($positions as $position) {
                 $this->dropshipOrder->addPosition(
                     $position['productnumber'],
                     $position['quantity']
                 );
-            };
+            }
             // throws on API errors and order position validation errors
             $info = $this->dropshipOrder->send();
-            $this->updateDropshipInfo($dropshipPositions, $info);
+            $this->updateDropshipInfo($positions, $info);
         } catch (DropshipOrderException $e) {
-            $this->handleDropshipOrderException($e);
+            $this->errorHandler->handleOrderException($e, $order);
         }
 
         $this->postProcessOrder();
@@ -87,50 +88,50 @@ class OrderProcessor implements ModelManagerAwareInterface, DatabaseAwareInterfa
 
     protected function postProcessOrder()
     {
-        if (Shopware()->Config()->get('dc_mail_send') || $errorCode) {
-            $mail = Shopware()->Models()->getRepository('\Shopware\Models\Mail\Mail')->findOneBy(['name' => 'DC_DROPSHIP_ORDER']);
-            if ($mail) {
-
-                $context = [
-                    'status'      => $dropshipInfo['DROPSHIPPING']['DROPSHIP']['STATUS'],
-                    'orderNumber' => $fullOrder['ordernumber'],
-                    'articles'    => $dropshipPositions['ic'],
-                    'orderInfo'   => $orderInfo
-                ];
-                $mail = Shopware()->TemplateMail()->createMail('DC_DROPSHIP_ORDER', $context);
-                $mail->addTo(Shopware()->Config()->Mail);
-
-                $dcMailRecipients = $this->getConfigCcRecipients();
-                if (! empty($dcMailRecipients)) {
-                    foreach ($dcMailRecipients as $recipient) {
-                        $mail->addCc($recipient);
-                    }
-                }
-
-                $mail->send();
-            }
-        }
-
-        if (! empty($errorCodeListForEmail)) {
-
-            $mail = Shopware()->Mail();
-            $mail->IsHTML(0);
-            $mail->From = Shopware()->Config()->Mail;
-            $mail->FromName = Shopware()->Config()->Mail;
-            $mail->Subject = 'Fehler beim Übermitteln von Aufträgen an Innocigs';
-            $mail->Body = $errorCodeListForEmail;
-
-            $dcMailRecipients = $this->getConfigCcErrorReciepents();
-            if (! empty($dcMailRecipients)) {
-                foreach ($dcMailRecipients as $recipient) {
-                    $mail->addCc($recipient);
-                }
-            }
-
-            $mail->ClearAddresses();
-            $mail->AddAddress(Shopware()->Config()->Mail, Shopware()->Config()->Mail);
-            $mail->Send();
-        }
+//        if (Shopware()->Config()->get('dc_mail_send') || $errorCode) {
+//            $mail = Shopware()->Models()->getRepository('\Shopware\Models\Mail\Mail')->findOneBy(['name' => 'DC_DROPSHIP_ORDER']);
+//            if ($mail) {
+//
+//                $context = [
+//                    'status'      => $dropshipInfo['DROPSHIPPING']['DROPSHIP']['STATUS'],
+//                    'orderNumber' => $fullOrder['ordernumber'],
+//                    'articles'    => $dropshipPositions['ic'],
+//                    'orderInfo'   => $orderInfo
+//                ];
+//                $mail = Shopware()->TemplateMail()->createMail('DC_DROPSHIP_ORDER', $context);
+//                $mail->addTo(Shopware()->Config()->Mail);
+//
+//                $dcMailRecipients = $this->getConfigCcRecipients();
+//                if (! empty($dcMailRecipients)) {
+//                    foreach ($dcMailRecipients as $recipient) {
+//                        $mail->addCc($recipient);
+//                    }
+//                }
+//
+//                $mail->send();
+//            }
+//        }
+//
+//        if (! empty($errorCodeListForEmail)) {
+//
+//            $mail = Shopware()->Mail();
+//            $mail->IsHTML(0);
+//            $mail->From = Shopware()->Config()->Mail;
+//            $mail->FromName = Shopware()->Config()->Mail;
+//            $mail->Subject = 'Fehler beim Übermitteln von Aufträgen an Innocigs';
+//            $mail->Body = $errorCodeListForEmail;
+//
+//            $dcMailRecipients = $this->getConfigCcErrorReciepents();
+//            if (! empty($dcMailRecipients)) {
+//                foreach ($dcMailRecipients as $recipient) {
+//                    $mail->addCc($recipient);
+//                }
+//            }
+//
+//            $mail->ClearAddresses();
+//            $mail->AddAddress(Shopware()->Config()->Mail, Shopware()->Config()->Mail);
+//            $mail->Send();
+//        }
     }
 
 

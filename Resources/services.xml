@@ -10,7 +10,7 @@
             <tag name="shopware.event_subscriber"/>
         </service>
 
-        <service id="mxc_dropship_innocigs.cronjob.import"
+        <service id="mxc_dropship_innocigs.cronjob.importFromApi"
                  class="MxcDropshipInnocigs\Cronjobs\ImportCronJob">
             <tag name="shopware.event_subscriber"/>
         </service>
@@ -29,9 +29,9 @@
             <tag name="shopware.event_subscriber"/>
         </service>
 
-        <service id="mxc_dropship_innocigs.command.import"
+        <service id="mxc_dropship_innocigs.command.importFromApi"
                 class="MxcDropshipInnocigs\Commands\ImportCommand">
-            <tag name="console.command" command="mxcdsi:import"/>
+            <tag name="console.command" command="mxcdsi:importFromApi"/>
         </service>
 
         <service id="mxc_dropship_innocigs.command.stock_update"

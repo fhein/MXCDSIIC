@@ -2,10 +2,8 @@
 
 namespace MxcDropshipInnocigs;
 
-use MxcCommons\Plugin\Service\AugmentedObjectFactory;
 use MxcDropshipInnocigs\Models\Model;
 use MxcDropshipInnocigs\Services\ApiClient;
-use MxcDropshipInnocigs\Services\ApiClientSequential;
 use MxcDropshipInnocigs\Services\ArticleRegistry;
 use MxcDropshipInnocigs\Services\Credentials;
 use MxcDropshipInnocigs\Services\DropshipOrder;
@@ -14,6 +12,9 @@ use MxcDropshipInnocigs\Services\ImportClient;
 use MxcDropshipInnocigs\Services\OrderErrorHandler;
 use MxcDropshipInnocigs\Services\OrderProcessor;
 use MxcDropshipInnocigs\Services\StockInfo;
+use MxcDropshipInnocigs\Xml\HttpReader;
+use MxcDropshipInnocigs\Xml\ResponseToArray;
+use MxcDropshipInnocigs\Xml\XmlReader;
 use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
 
 return [
@@ -51,19 +52,19 @@ return [
     ],
 
     'services'     => [
-        'factories' => [
-            OrderErrorHandler::class => AugmentedObjectFactory::class,
-        ],
         'magicals'  => [
+            OrderErrorHandler::class,
             DropshipOrder::class,
             ArticleRegistry::class,
             ApiClient::class,
-            ApiClientSequential::class,
             Credentials::class,
             ImportClient::class,
             DropshippersCompanion::class,
             StockInfo::class,
             OrderProcessor::class,
+            HttpReader::class,
+            XmlReader::class,
+            ResponseToArray::class,
         ],
     ],
     'class_config' => [

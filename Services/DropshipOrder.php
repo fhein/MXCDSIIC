@@ -2,16 +2,15 @@
 
 namespace MxcDropshipInnocigs\Services;
 
-use MxcCommons\Plugin\Service\ClassConfigAwareInterface;
 use MxcCommons\Plugin\Service\ClassConfigAwareTrait;
-use MxcCommons\Plugin\Service\ModelManagerAwareInterface;
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
+use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropshipInnocigs\Exception\ApiException;
 use MxcDropshipInnocigs\Exception\DropshipOrderException;
 use SimpleXMLElement;
 use Shopware_Components_Config;
 
-class DropshipOrder implements ClassConfigAwareInterface, ModelManagerAwareInterface
+class DropshipOrder implements AugmentedObject
 {
     // Auftrag noch nicht überträgen
     const ORDER_STATUS_OPEN         = 0;
@@ -42,13 +41,11 @@ class DropshipOrder implements ClassConfigAwareInterface, ModelManagerAwareInter
         $this->client = $client;
     }
 
-    public function create(string $orderNumber, array $shippingAddress)
+    public function create(array $shippingAddress)
     {
         $this->recipient = null;
         $this->originator = null;
         $this->positions = [];
-
-        $config = $this->classConfig['originator'];
 
         $this->setOriginator(
             $this->config->get('mxcbc_dsi_ic_company'),
@@ -101,7 +98,7 @@ class DropshipOrder implements ClassConfigAwareInterface, ModelManagerAwareInter
 
         $errors = $this->validateRecipient();
         if (! empty($errors)) {
-            throw DropshipOrderException::fromInvalidRecipientAdress($errors);
+            throw DropshipOrderException::fromInvalidRecipientAddress($errors);
         }
 
     }
@@ -253,7 +250,6 @@ class DropshipOrder implements ClassConfigAwareInterface, ModelManagerAwareInter
 
     protected function validateOrderPositions()
     {
-        $stockInfo = [];
         $result = true;
         foreach ($this->positions as &$position) {
             try {

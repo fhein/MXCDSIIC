@@ -1,19 +1,15 @@
 <?php /** @noinspection PhpUnhandledExceptionInspection */
 
-
 namespace MxcDropshipInnocigs\Services;
 
-
-use MxcCommons\Plugin\Service\LoggerAwareInterface;
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
-use MxcCommons\Plugin\Service\ModelManagerAwareInterface;
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
-use MxcDropshipInnocigs\Services\ApiClient;
+use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropshipIntegrator\Models\Variant;
 use MxcCommons\Toolbox\Shopware\ArticleTool;
 use Shopware\Models\Plugin\Plugin;
 
-class DropshippersCompanion implements ModelManagerAwareInterface, LoggerAwareInterface
+class DropshippersCompanion implements AugmentedObject
 {
     use ModelManagerAwareTrait;
     use LoggerAwareTrait;

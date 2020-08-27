@@ -3,23 +3,15 @@
 namespace MxcDropshipInnocigs\Services;
 
 use MxcCommons\Interop\Container\ContainerInterface;
-use MxcCommons\Plugin\Service\AugmentedObjectFactory;
+use MxcCommons\ServiceManager\Factory\FactoryInterface;
 
-class ArticleRegistryFactory extends AugmentedObjectFactory
+class ArticleRegistryFactory implements FactoryInterface
 {
-    /**
-     * Create an object
-     *
-     * @param  ContainerInterface $container
-     * @param  string $requestedName
-     * @param  null|array $options
-     * @return object
-     */
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
         $db = Shopware()->Db();
         $client = $container->get(ApiClient::class);
-        return $this->augment($container, new ArticleRegistry($client, $db));
+        return new ArticleRegistry($client, $db);
     }
 
 }

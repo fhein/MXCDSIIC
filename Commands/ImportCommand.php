@@ -17,7 +17,7 @@ class ImportCommand extends ShopwareCommand
     protected function configure()
     {
         $this
-            ->setName('mxcdsi:import')
+            ->setName('mxcdsi:importFromApi')
             ->setDescription('Import products from InnoCigs')
             /*  ->addArgument(
                   'filepath',

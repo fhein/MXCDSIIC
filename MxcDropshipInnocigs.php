@@ -22,7 +22,6 @@ class MxcDropshipInnocigs extends Plugin {
         $factory = new ServicesFactory();
         self::$services = $factory->getServices(__DIR__);
         return self::$services;
-
     }
 }
 

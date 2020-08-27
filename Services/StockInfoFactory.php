@@ -9,8 +9,6 @@ class StockInfoFactory implements FactoryInterface
 {
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $db = $container->get('db');
-        $client = $container->get(ApiClient::class);
-        return new StockInfo($client);
+        return new StockInfo($container->get(ApiClient::class));
     }
 }

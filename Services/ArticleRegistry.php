@@ -3,17 +3,16 @@
 namespace MxcDropshipInnocigs\Services;
 
 use Enlight_Components_Db_Adapter_Pdo_Mysql;
-use MxcCommons\Plugin\Service\LoggerAwareInterface;
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
-use MxcCommons\Plugin\Service\ModelManagerAwareInterface;
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
+use MxcCommons\ServiceManager\AugmentedObject;
 use MxcCommons\Toolbox\Strings\StringTool;
 use MxcDropshipInnocigs\Exception\InvalidArgumentException;
 use MxcDropshipIntegrator\Dropship\ArticleRegistryInterface;
 use MxcDropshipIntegrator\Dropship\DropshipManager;
 use MxcDropshipIntegrator\Models\Variant;
 
-class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterface, ArticleRegistryInterface
+class ArticleRegistry implements AugmentedObject, ArticleRegistryInterface
 {
     use ModelManagerAwareTrait;
     use LoggerAwareTrait;
@@ -26,8 +25,7 @@ class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterfac
     private $fields = [
         'mxcbc_dsi_ic_registered'     => false,
         'mxcbc_dsi_ic_status'         => null,
-        'mxcbc_dsi_ic_active'         => null,
-        'mxcbc_dsi_ic_delivery' => null,
+        'mxcbc_dsi_ic_delivery'        => null,
         'mxcbc_dsi_ic_productnumber'  => null,
         'mxcbc_dsi_ic_productname'    => null,
         'mxcbc_dsi_ic_purchaseprice'  => null,
@@ -43,7 +41,7 @@ class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterfac
     public function __construct(ApiClient $client, Enlight_Components_Db_Adapter_Pdo_Mysql $db)
     {
         if ($client === null) {
-            throw \MxcDropshipInnocigs\Exception\InvalidArgumentException::fromInvalidObject(
+            throw InvalidArgumentException::fromInvalidObject(
                 ApiClient::class,
                 $client
             );
@@ -60,7 +58,7 @@ class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterfac
         $this->select = implode(', ', array_keys($this->fields));
     }
 
-    public function configureDropship(Variant $variant, int $stockInfo, bool $active = true)
+    public function configureDropship(Variant $variant, int $stockInfo, bool $deliveryMode = DropshipManager::DELIVERY_DROPSHIP_ONLY)
     {
         $detail = $variant->getDetail();
         if (! $detail) return;
@@ -71,8 +69,7 @@ class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterfac
             'mxcbc_dsi_ic_purchaseprice'  => $variant->getPurchasePrice(),
             'mxcbc_dsi_ic_retailprice'    => round($variant->getRecommendedRetailPrice(), 2),
             'mxcbc_dsi_ic_instock'        => $stockInfo[$variant->getIcNumber()] ?? 0,
-            'mxcbc_dsi_ic_delivery'       => DropshipManager::DELIVERY_DROPSHIP_ONLY,
-            'mxcbc_dsi_ic_active'         => true,
+            'mxcbc_dsi_ic_delivery'       => $deliveryMode,
             'mxcbc_dsi_ic_status'         => ArticleRegistry::NO_ERROR,
             'mxcbc_dsi_ic_registered'     => true,
         ];
@@ -92,7 +89,7 @@ class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterfac
         );
         if (! $this->db->fetchAll($sql)) return [self::ERROR_DUPLICATE_REGISTRATION, $this->fields];
 
-        $info = $this->client->getItemInfo($productNumber);
+        $info = $this->client->getProduct($productNumber);
         if (empty($info)) return [self::ERROR_PRODUCT_UNKNOWN, null];
 
         $info = $info[$productNumber];
@@ -103,7 +100,6 @@ class ArticleRegistry implements ModelManagerAwareInterface, LoggerAwareInterfac
             'mxcbc_dsi_ic_retailprice'    => StringTool::toFloat($info['recommendedRetailPrice']),
             'mxcbc_dsi_ic_instock'        => $this->client->getStockInfo($productNumber),
             'mxcbc_dsi_ic_delivery'       => $delivery,
-            'mxcbc_dsi_ic_active'         => $active,
             'mxcbc_dsi_ic_status'         => self::NO_ERROR,
             'mxcbc_dsi_ic_registered'     => true,
         ];
