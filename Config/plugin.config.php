@@ -3,6 +3,7 @@
 namespace MxcDropshipInnocigs;
 
 use MxcDropshipInnocigs\Models\Model;
+use MxcDropshipInnocigs\PluginListeners\RegisterDropshipModule;
 use MxcDropshipInnocigs\Services\ApiClient;
 use MxcDropshipInnocigs\Services\ArticleRegistry;
 use MxcDropshipInnocigs\Services\Credentials;
@@ -18,7 +19,8 @@ use MxcDropshipInnocigs\Xml\XmlReader;
 use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
 
 return [
-    'plugin'   => [
+    'plugin_listeners'   => [
+        RegisterDropshipModule::class
     ],
     'doctrine' => [
         'models'     => [

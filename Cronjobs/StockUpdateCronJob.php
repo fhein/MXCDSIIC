@@ -67,7 +67,7 @@ class StockUpdateCronJob implements SubscriberInterface
         $registry = $services->get(ArticleRegistry::class);
 
         $info = $apiClient->getProducts(true, false);
-        $stockInfo = $apiClient->getAllStockInfo();
+        $stockInfo = $apiClient->getStockInfo();
         $details = $this->modelManager->getRepository(Detail::class)->findAll();
 
         /** @var Detail $detail */

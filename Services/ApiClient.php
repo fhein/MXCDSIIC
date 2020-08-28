@@ -63,14 +63,16 @@ class ApiClient implements AugmentedObject
         return $this->httpReader->readXml($cmd);
     }
 
-    public function getStockInfo(string $model)
+    public function getStockInfo(string $model = null)
     {
+        if ($model === null) return $this->getAllStockInfo();
+
         $cmd = $this->authUrl . '&command=quantity&model=' . urlencode($model);
         $data = $this->httpReader->readXml($cmd);
         return $data['QUANTITIES']['PRODUCT']['QUANTITY'];
     }
 
-    public function getAllStockInfo()
+    protected function getAllStockInfo()
     {
         $cmd = $this->authUrl . '&command=quantity_all';
         $data = $this->httpReader->readXml($cmd);
