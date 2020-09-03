@@ -2,7 +2,7 @@
 
 namespace MxcDropshipInnocigs\Jobs;
 
-use MxcDropshipInnocigs\Services\ImportClient;
+use MxcDropshipInnocigs\Import\ImportClient;
 use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use MxcDropshipIntegrator\Mapping\ImportPriceMapper;
 use MxcDropshipIntegrator\MxcDropshipIntegrator;
@@ -13,10 +13,20 @@ use MxcDropshipIntegrator\MxcDropshipIntegrator;
  */
 class UpdatePrices
 {
-    public static function run()
+    /** @var ImportClient  */
+    protected $client;
+
+    /** @var ImportPriceMapper  */
+    protected $mapper;
+
+    public function __construct(ImportClient $client, ImportPriceMapper $mapper)
     {
-        $client = MxcDropshipInnocigs::getServices()->get(ImportClient::class);
-        $mapper = MxcDropshipIntegrator::getServices()->get(ImportPriceMapper::class);
-        $mapper->import($client->import(false));
+        $this->mapper = $mapper;
+        $this->client = $client;
+    }
+
+    public function run()
+    {
+        $this->mapper->import($this->client->importFromApi(false, true));
     }
 }

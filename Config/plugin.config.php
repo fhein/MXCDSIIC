@@ -2,20 +2,23 @@
 
 namespace MxcDropshipInnocigs;
 
+use MxcDropshipInnocigs\EventListeners\DropshipEventListener;
+use MxcDropshipInnocigs\Jobs\UpdatePrices;
+use MxcDropshipInnocigs\Jobs\UpdateStock;
 use MxcDropshipInnocigs\Models\Model;
 use MxcDropshipInnocigs\PluginListeners\RegisterDropshipModule;
-use MxcDropshipInnocigs\Services\ApiClient;
-use MxcDropshipInnocigs\Services\ArticleRegistry;
-use MxcDropshipInnocigs\Services\Credentials;
-use MxcDropshipInnocigs\Services\DropshipOrder;
-use MxcDropshipInnocigs\Services\DropshippersCompanion;
-use MxcDropshipInnocigs\Services\ImportClient;
-use MxcDropshipInnocigs\Services\OrderErrorHandler;
-use MxcDropshipInnocigs\Services\OrderProcessor;
-use MxcDropshipInnocigs\Services\StockInfo;
-use MxcDropshipInnocigs\Xml\HttpReader;
-use MxcDropshipInnocigs\Xml\ResponseToArray;
-use MxcDropshipInnocigs\Xml\XmlReader;
+use MxcDropshipInnocigs\Api\ApiClient;
+use MxcDropshipInnocigs\Article\ArticleRegistry;
+use MxcDropshipInnocigs\Api\Credentials;
+use MxcDropshipInnocigs\Order\DropshipOrder;
+use MxcDropshipInnocigs\Companion\DropshippersCompanion;
+use MxcDropshipInnocigs\Import\ImportClient;
+use MxcDropshipInnocigs\Order\OrderErrorHandler;
+use MxcDropshipInnocigs\Order\OrderProcessor;
+use MxcDropshipInnocigs\Stock\StockInfo;
+use MxcDropshipInnocigs\Api\Xml\HttpReader;
+use MxcDropshipInnocigs\Api\Xml\ResponseToArray;
+use MxcDropshipInnocigs\Api\Xml\XmlReader;
 use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
 
 return [
@@ -67,9 +70,18 @@ return [
             HttpReader::class,
             XmlReader::class,
             ResponseToArray::class,
+            UpdateStock::class,
+            UpdatePrices::class,
+            DropshipEventListener::class,
         ],
-    ],
-    'class_config' => [
-        ImportClient::class  => 'ImportClient.config.php',
+        'aliases' => [
+            'DropshipEventListener'     => DropshipEventListener::class,
+            'ArticleRegistry'           => ArticleRegistry::class,
+            'ApiClient'                 => ApiClient::class,
+            'ImportClient'              => ImportClient::class,
+            'StockInfo'                 => StockInfo::class,
+            'OrderProcessor'            => OrderProcessor::class,
+            'DropshippersCompanion'     => DropshippersCompanion::class,
+        ]
     ],
 ];

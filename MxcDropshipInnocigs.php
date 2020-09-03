@@ -2,8 +2,10 @@
 
 namespace MxcDropshipInnocigs;
 
+use MxcCommons\EventManager\SharedEventManager;
 use MxcCommons\Plugin\Plugin;
 use MxcCommons\Plugin\Service\ServicesFactory;
+use MxcDropshipInnocigs\EventListeners\DropshipEventListener;
 use Shopware\Components\Plugin\Context\ActivateContext;
 use Shopware\Components\Plugin\Context\UninstallContext;
 

@@ -65,6 +65,7 @@ class DropshipOrderException extends RuntimeException
         $msg = 'Invalid recipient address.';
         $e = new self($msg, self::RECIPIENT_ADDRESS_ERROR);
 
+        $errors = [];
         foreach ($err as $error) {
             $errors[] = [
                 'CODE' => $error,

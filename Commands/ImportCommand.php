@@ -1,9 +1,9 @@
-<?php
+<?php /** @noinspection PhpUndefinedClassInspection */
 
 namespace MxcDropshipInnocigs\Commands;
 
 use MxcDropshipInnocigs\MxcDropshipInnocigs;
-use MxcDropshipInnocigs\Services\ImportClient;
+use MxcDropshipInnocigs\Import\ImportClient;
 use Shopware\Commands\ShopwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;

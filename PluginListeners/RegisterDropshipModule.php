@@ -4,8 +4,8 @@ namespace MxcDropshipInnocigs\PluginListeners;
 
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
-use MxcDropshipIntegrator\Dropship\DropshipManager;
-use MxcDropshipIntegrator\Models\DropshipModule;
+use MxcDropship\Dropship\DropshipManager;
+use MxcDropship\Models\DropshipModule;
 use MxcDropshipIntegrator\MxcDropshipIntegrator;
 use Shopware\Components\Plugin\Context\ActivateContext;
 use Shopware\Components\Plugin\Context\DeactivateContext;
@@ -27,7 +27,6 @@ class RegisterDropshipModule implements AugmentedObject
         $module->setSupplierId(DropshipManager::SUPPLIER_INNOCIGS);
         $plugin = strstr(__CLASS__, '\\', true);
         $module->setPlugin($plugin);
-        $module->setNamespace($plugin. '\\Services');
         $this->modelManager->persist($module);
         $this->modelManager->flush();
     }
