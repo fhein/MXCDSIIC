@@ -38,7 +38,9 @@ class CredentialsFactory implements FactoryInterface
 
                     $log = MxcDropshipInnocigs::getServices()->get('logger');
                     $mode = strtoupper($this->mode);
-                    $log->info(sprintf("***** %s MODE, USER: %s ****", $mode, $user));
+//                    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+//                    $log->info(var_export($trace, true));
+//                    $log->info(sprintf("***** %s MODE, USER: %s ****", $mode, $user));
                 }
             }
         }

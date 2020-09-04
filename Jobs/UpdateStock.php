@@ -72,6 +72,7 @@ class UpdateStock implements AugmentedObject
             ArticleTool::setDetailAttribute($detail, 'dc_ic_instock', $instock);
 
         }
+        $this->log->info('Stock update job completed.');
     }
 
     protected function isCompanionInstalled() {
