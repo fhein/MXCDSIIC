@@ -18,35 +18,41 @@ class CredentialsFactory implements FactoryInterface
         $host = $contextService->createShopContext(1)->getShop()->getHost();
         if ($host === 'www.vapee.de') $this->mode = 'production';
 
-        $config = $container->get('shopwareConfig');
-        $user = $config->offsetGet('api_user');
-        $password = null;
-        if (is_string($user)) {
-            $password = $config->offsetGet('api_password');
-        } else {
-            $credentialsTable = 's_mxcbc_dsi_credentials';
-            /**
-             * @var Connection $dbal
-             */
-            $dbal = $container->get('dbal_connection');
-            if ($dbal->getSchemaManager()->tablesExist([$credentialsTable])) {
-                $sql = sprintf('SELECT user, password FROM %s WHERE type = \'%s\'', $credentialsTable, $this->mode);
-                $credentials = $dbal->query($sql)->fetchAll();
-                if (count($credentials) > 0) {
-                    $user = $credentials[0]['user'];
-                    $password = $credentials[0]['password'];
-
-                    $log = MxcDropshipInnocigs::getServices()->get('logger');
-                    $mode = strtoupper($this->mode);
-//                    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-//                    $log->info(var_export($trace, true));
-//                    $log->info(sprintf("***** %s MODE, USER: %s ****", $mode, $user));
-                }
-            }
+        [$user, $password] = $this->getCredentialsFromConfig($container);
+        if (empty($user)) {
+            [$user, $password] = $this->getCredentialsFromDb($container);
         }
+
         if (! (is_string($user) && is_string($password) && $user !== '' && $password !== '')) {
             throw new ServiceNotCreatedException('No valid InnoCigs API credentials available.');
         }
+
         return new Credentials($user, $password);
+    }
+
+    protected function getCredentialsFromConfig(ContainerInterface $container)
+    {
+        $config = $container->get('shopwareConfig');
+        $user = $config->offsetGet('api_user');
+        $password = $config->offsetGet('api_password');
+        return [$user, $password];
+    }
+
+    protected function getCredentialsFromDb(ContainerInterface $container)
+    {
+        $credentialsTable = 's_mxcbc_dsi_credentials';
+        /** @var  $ */
+        $dbal = $container->get('dbal_connection');
+        $user = null;
+        $password = null;
+        if ($dbal->getSchemaManager()->tablesExist([$credentialsTable])) {
+            $sql = sprintf('SELECT user, password FROM %s WHERE type = \'%s\'', $credentialsTable, $this->mode);
+            $credentials = $dbal->fetchAssoc($sql);
+            if ($credentials) {
+                $user = $credentials['user'];
+                $password = $credentials['password'];
+            }
+        }
+        return [$user, $password];
     }
 }

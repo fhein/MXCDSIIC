@@ -59,7 +59,7 @@ class ArticleRegistry implements AugmentedObject, ArticleRegistryInterface
         $this->select = implode(', ', array_keys($this->fields));
     }
 
-    public function configureDropship(Variant $variant, int $stockInfo, bool $deliveryMode = DropshipManager::DELIVERY_DROPSHIP_ONLY)
+    public function configureDropship(Variant $variant, int $stockInfo, int $deliveryMode = DropshipManager::DELIVERY_DROPSHIP_ONLY)
     {
         $detail = $variant->getDetail();
         if (! $detail) return;
@@ -69,7 +69,7 @@ class ArticleRegistry implements AugmentedObject, ArticleRegistryInterface
             'mxcbc_dsi_ic_productname'    => $variant->getName(),
             'mxcbc_dsi_ic_purchaseprice'  => $variant->getPurchasePrice(),
             'mxcbc_dsi_ic_retailprice'    => round($variant->getRecommendedRetailPrice(), 2),
-            'mxcbc_dsi_ic_instock'        => $stockInfo[$variant->getIcNumber()] ?? 0,
+            'mxcbc_dsi_ic_instock'        => $stockInfo,
             'mxcbc_dsi_ic_delivery'       => $deliveryMode,
             'mxcbc_dsi_ic_status'         => ArticleRegistry::NO_ERROR,
             'mxcbc_dsi_ic_registered'     => true,

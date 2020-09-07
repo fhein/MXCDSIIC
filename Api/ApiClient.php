@@ -18,6 +18,13 @@ class ApiClient implements AugmentedObject
     protected $xmlReader;
     protected $httpReader;
 
+    // cache for product list without descriptions
+    protected $productsCache;
+    // cache for product list with descriptions
+    protected $productsCacheExtended;
+    // cache for stock list
+    protected $stockInfoCache;
+
     public function __construct(Credentials $credentials, XmlReader $xmlReader, HttpReader $httpReader)
     {
         $this->apiEntry = 'https://www.innocigs.com/xmlapi/api.php';
@@ -34,15 +41,26 @@ class ApiClient implements AugmentedObject
             : $this->httpReader->readModels($cmd, $flat);
     }
 
+    // note: product list gets cached to prevent multiple downloads per request
     public function getProducts(bool $flat, bool $includeDescriptions, bool $sequential = true)
     {
         $cmd = $this->authUrl . '&command=products';
+        if ($this->productsCacheExtended !== null) return $this->productsCacheExtended;
         if ($includeDescriptions) {
             $cmd .= '&type=extended';
+        } else {
+            if ($this->productsCache !== null) return $this->productsCache;
         }
-        return $sequential
+        $result =  $sequential
             ? $this->xmlReader->readModelsFromUri($cmd, $flat)
             : $this->httpReader->readModels($cmd, $flat);
+
+        if ($includeDescriptions) {
+            $this->productsCacheExtended = $result;
+        } else {
+            $this->productsCache = $result;
+        }
+        return $result;
     }
 
     // note: we currently support one dropship order per request (the InnoCigs API supports a list of dropship)
@@ -72,8 +90,11 @@ class ApiClient implements AugmentedObject
         return $data['QUANTITIES']['PRODUCT']['QUANTITY'];
     }
 
+    // note: result gets cached to prevent multiple downloads per request
     protected function getAllStockInfo()
     {
+        if ($this->stockInfoCache !== null) return $this->stockInfoCache;
+
         $cmd = $this->authUrl . '&command=quantity_all';
         $data = $this->httpReader->readXml($cmd);
 
@@ -81,6 +102,7 @@ class ApiClient implements AugmentedObject
         foreach ($data['QUANTITIES']['PRODUCT'] as $record) {
             $stockInfo[$record['PRODUCTS_MODEL']] = $record['QUANTITY'];
         }
+        $this->stockInfoCache = $stockInfo;
         return $stockInfo;
     }
 
