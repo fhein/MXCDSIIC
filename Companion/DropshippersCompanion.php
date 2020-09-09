@@ -2,6 +2,7 @@
 
 namespace MxcDropshipInnocigs\Companion;
 
+use MxcCommons\Plugin\Service\DatabaseAwareTrait;
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
@@ -14,6 +15,7 @@ class DropshippersCompanion implements AugmentedObject
 {
     use ModelManagerAwareTrait;
     use LoggerAwareTrait;
+    use DatabaseAwareTrait;
 
     /** @var bool */
     protected $companionPresent;
@@ -65,8 +67,24 @@ class DropshippersCompanion implements AugmentedObject
         return $this->companionPresent;
     }
 
-    protected function getStockInfo()
-    {
-        return $this->stockInfo ?? $this->stockInfo = $this->apiClient->getStockInfo();
+    public function getDetailPrices() {
+        $sql = '
+            SELECT 
+                d.id,
+                d.purchaseprice,
+                aa.dc_ic_ordernumber as number 
+            FROM s_articles_details d
+            LEFT JOIN s_articles_attributes aa ON d.id = aa.articledetailsID  
+            WHERE aa.dc_ic_ordernumber IS NOT NULL
+        ';
+        $data = $this->db->fetchAll($sql);
+        $details = [];
+        foreach ($data as $item) {
+            $details[$item['number']] = [
+                'id' => $item['id'],
+                'purchasePrice' => $item['purchaseprice'],
+            ];
+        }
+        return $details;
     }
 }

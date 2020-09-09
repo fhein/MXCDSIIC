@@ -24,6 +24,8 @@ class ApiClient implements AugmentedObject
     protected $productsCacheExtended;
     // cache for stock list
     protected $stockInfoCache;
+    // cache for price list
+    protected $priceCache;
 
     public function __construct(Credentials $credentials, XmlReader $xmlReader, HttpReader $httpReader)
     {
@@ -79,6 +81,33 @@ class ApiClient implements AugmentedObject
 
         $cmd = $this->authUrl . '&command=tracking&day=' . $date;
         return $this->httpReader->readXml($cmd);
+    }
+
+    protected function getPriceData(array $data)
+    {
+        return [
+            'purchasePrice' => str_replace(',', '.', $data['purchasePrice']),
+            'recommendedRetailPrice' => str_replace(',', '.', $data['recommendedRetailPrice']),
+        ];
+    }
+
+    public function getPrices(string $model = null)
+    {
+        if ($model === null) return $this->getAllPrices();
+        $model = $this->getProduct($model);
+        return $this->getPriceData($model);
+    }
+
+    protected function getAllPrices()
+    {
+        if ($this->priceCache !== null) return $this->priceCache;
+        $models = $this->getProducts(true, false);
+        $prices = [];
+        foreach ($models as $model) {
+            $prices[$model['model']] = $this->getPriceData($model);
+        }
+        $this->priceCache = $prices;
+        return $prices;
     }
 
     public function getStockInfo(string $model = null)

@@ -9,6 +9,7 @@ use MxcCommons\Toolbox\Shopware\ArticleTool;
 use MxcCommons\Toolbox\Strings\StringTool;
 use MxcDropshipInnocigs\Api\ApiClient;
 use MxcDropshipInnocigs\Article\ArticleRegistry;
+use MxcDropshipInnocigs\Companion\DropshippersCompanion;
 use Shopware\Models\Article\Detail;
 use Shopware\Models\Plugin\Plugin;
 
@@ -23,12 +24,15 @@ class UpdateStock implements AugmentedObject
     /** @var ArticleRegistry */
     protected $registry;
 
+    protected $companion;
+
     protected $companionPresent;
 
-    public function __construct(ApiClient $client, ArticleRegistry $registry)
+    public function __construct(ApiClient $client, ArticleRegistry $registry, DropshippersCompanion $companion)
     {
         $this->client = $client;
         $this->registry = $registry;
+        $this->companion = $companion;
     }
 
     public function run()
@@ -76,12 +80,6 @@ class UpdateStock implements AugmentedObject
     }
 
     protected function isCompanionInstalled() {
-        if ($this->companionPresent === null) {
-            $this->companionPresent = (null != $this->modelManager->getRepository(Plugin::class)->findOneBy(['name' => 'wundeDcInnoCigs']));
-            if (! $this->companionPresent) {
-                $this->log->info('Update stock cronjob: Companion is not installed.');
-            }
-        }
-        return $this->companionPresent;
+        return $this->companionPresent ?? $this->companionPresent = $this->companion->validate();
     }
 }
