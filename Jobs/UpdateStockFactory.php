@@ -15,6 +15,6 @@ class UpdateStockFactory implements FactoryInterface
         $companion = $container->get(DropshippersCompanion::class);
         $client = $container->get(ApiClient::class);
         $registry = $container->get(ArticleRegistry::class);
-        return new UpdateStock($client, $registry, $companion);
+        return new UpdateStock($client, $companion);
     }
 }

@@ -6,9 +6,6 @@ use MxcCommons\Interop\Container\ContainerInterface;
 use MxcCommons\ServiceManager\Factory\FactoryInterface;
 use MxcDropshipInnocigs\Api\ApiClient;
 use MxcDropshipInnocigs\Companion\DropshippersCompanion;
-use MxcDropshipInnocigs\Import\ImportClient;
-use MxcDropshipIntegrator\Mapping\ImportPriceMapper;
-use MxcDropshipIntegrator\MxcDropshipIntegrator;
 
 class UpdatePricesFactory implements FactoryInterface
 {

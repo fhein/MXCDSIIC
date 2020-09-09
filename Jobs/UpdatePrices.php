@@ -35,7 +35,7 @@ class UpdatePrices implements AugmentedObject
     {
         $this->apiClient = $apiClient;
         $this->companion = $companion;
-        $$this->vatFactor = 1 + TaxTool::getCurrentVatPercentage() / 100;
+        $this->vatFactor = 1 + TaxTool::getCurrentVatPercentage() / 100;
     }
 
     // called when augmentation is done
@@ -91,7 +91,7 @@ class UpdatePrices implements AugmentedObject
                 a.mxcbc_dsi_ic_productnumber as number 
             FROM s_articles_details d
             LEFT JOIN s_articles_attributes a ON d.id = a.articledetailsID  
-            WHERE aa.mxcbc_dsi_ic_productnumber IS NOT NULL
+            WHERE a.mxcbc_dsi_ic_productnumber IS NOT NULL
         ';
         $data = $this->db->fetchAll($sql);
         $details = [];
