@@ -3,6 +3,7 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+
         <service id="mxc_dropship_innocigs.subscriber.templates"
                  class="MxcDropshipInnocigs\Subscribers\TemplateRegistration">
             <argument>%mxc_dropship_innocigs.plugin_dir%</argument>
@@ -10,14 +11,5 @@
             <tag name="shopware.event_subscriber"/>
         </service>
 
-        <service id="mxc_dropship_innocigs.command.import_from_api"
-                class="MxcDropshipInnocigs\Commands\ImportCommand">
-            <tag name="console.command" command="mxcdsi:importFromApi"/>
-        </service>
-
-        <service id="mxc_dropship_innocigs.command.stock_update"
-                class="MxcDropshipInnocigs\Commands\StockUpdateCommand">
-            <tag name="console.command" command="mxcdsi:stockupdate"/>
-        </service>
     </services>
 </container>

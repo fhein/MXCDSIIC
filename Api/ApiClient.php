@@ -135,7 +135,14 @@ class ApiClient implements AugmentedObject
         return $stockInfo;
     }
 
-    public function getXmlReader() {
+    public function getXmlReader()
+    {
         return $this->xmlReader;
+    }
+
+
+    public function getHttpReader()
+    {
+        return $this->httpReader;
     }
 }

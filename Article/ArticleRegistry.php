@@ -8,12 +8,11 @@ use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
 use MxcCommons\Toolbox\Strings\StringTool;
 use MxcDropshipInnocigs\Exception\InvalidArgumentException;
-use MxcDropshipIntegrator\Dropship\ArticleRegistryInterface;
 use MxcDropship\Dropship\DropshipManager;
 use MxcDropshipIntegrator\Models\Variant;
 use MxcDropshipInnocigs\Api\ApiClient;
 
-class ArticleRegistry implements AugmentedObject, ArticleRegistryInterface
+class ArticleRegistry implements AugmentedObject
 {
     use ModelManagerAwareTrait;
     use LoggerAwareTrait;
@@ -23,18 +22,19 @@ class ArticleRegistry implements AugmentedObject, ArticleRegistryInterface
     const ERROR_PRODUCT_UNKNOWN         = 2;
     const ERROR_INVALID_ARGUMENT        = 3;
 
+    private $select;
+
+    // @todo: mxcbc_dsi_mode should be set somewhere else, because it is not Innocigs specific
     private $fields = [
+        'mxcbc_dsi_mode'              => null,
         'mxcbc_dsi_ic_registered'     => false,
         'mxcbc_dsi_ic_status'         => null,
-        'mxcbc_dsi_ic_delivery'       => null,
         'mxcbc_dsi_ic_productnumber'  => null,
         'mxcbc_dsi_ic_productname'    => null,
         'mxcbc_dsi_ic_purchaseprice'  => null,
         'mxcbc_dsi_ic_retailprice'    => null,
         'mxcbc_dsi_ic_instock'        => null,
     ];
-
-    private $select;
     private $client;
 
     private $db;
@@ -59,7 +59,7 @@ class ArticleRegistry implements AugmentedObject, ArticleRegistryInterface
         $this->select = implode(', ', array_keys($this->fields));
     }
 
-    public function configureDropship(Variant $variant, int $stockInfo, int $deliveryMode = DropshipManager::DELIVERY_DROPSHIP_ONLY)
+    public function configureDropship(Variant $variant, int $stockInfo, int $deliveryMode = DropshipManager::MODE_DROPSHIP_ONLY)
     {
         $detail = $variant->getDetail();
         if (! $detail) return;
@@ -70,7 +70,7 @@ class ArticleRegistry implements AugmentedObject, ArticleRegistryInterface
             'mxcbc_dsi_ic_purchaseprice'  => $variant->getPurchasePrice(),
             'mxcbc_dsi_ic_retailprice'    => round($variant->getRecommendedRetailPrice(), 2),
             'mxcbc_dsi_ic_instock'        => $stockInfo,
-            'mxcbc_dsi_ic_delivery'       => $deliveryMode,
+            'mxcbc_dsi_mode'              => $deliveryMode,
             'mxcbc_dsi_ic_status'         => ArticleRegistry::NO_ERROR,
             'mxcbc_dsi_ic_registered'     => true,
         ];
@@ -100,9 +100,10 @@ class ArticleRegistry implements AugmentedObject, ArticleRegistryInterface
             'mxcbc_dsi_ic_purchaseprice'  => StringTool::toFloat($info['purchasePrice']),
             'mxcbc_dsi_ic_retailprice'    => StringTool::toFloat($info['recommendedRetailPrice']),
             'mxcbc_dsi_ic_instock'        => $this->client->getStockInfo($productNumber),
-            'mxcbc_dsi_ic_delivery'       => $delivery,
             'mxcbc_dsi_ic_status'         => self::NO_ERROR,
             'mxcbc_dsi_ic_registered'     => true,
+            // should be moved to MxcDropship context, because it is not Innocigs specific
+            'mxcbc_dsi_mode'              => $delivery,
         ];
 
         $this->updateSettings($detailId, $data);
