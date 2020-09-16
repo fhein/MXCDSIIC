@@ -4,6 +4,7 @@ namespace MxcDropshipInnocigs\Api\Xml;
 
 use MxcCommons\Http\Client;
 use MxcCommons\Http\Exception\RuntimeException as ZendClientException;
+use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\Exception\ApiException;
 use DOMDocument;
 use DOMElement;
@@ -69,14 +70,9 @@ class HttpReader
     {
         $client = $this->getClient();
         $client->setUri($cmd);
-        try {
-            $response = $client->send();
-            if (! $response->isSuccess()) throw ApiException::fromHttpStatus($response->getStatusCode());
-            return $response;
-        } catch (ZendClientException $e) {
-            // no response or response empty
-            throw new ApiException($e->getMessage(), $e->getCode());
-        }
+        $response = $client->send(); // may throw
+        if (! $response->isSuccess()) throw ApiException::fromHttpStatus($response->getStatusCode());
+        return $response;
     }
 
     protected function getClient()

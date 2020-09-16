@@ -8,6 +8,8 @@ use DOMElement;
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropshipInnocigs\Exception\ApiException;
+use MxcDropship\Models\DropshipModule;
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 
 class ResponseToArray implements AugmentedObject
 {
@@ -16,6 +18,15 @@ class ResponseToArray implements AugmentedObject
     protected $logEnabled = false;
     protected $logPath;
     protected $logPathRow;
+
+    protected $supplierId;
+
+    public function __construct()
+    {
+        /** @var DropshipModule $module */
+        $module = MxcDropshipInnocigs::getModule();
+        $this->supplierId = $module->getId();
+    }
 
     public function modelToArray(DOMElement $model): array
     {
@@ -78,8 +89,8 @@ class ResponseToArray implements AugmentedObject
         if ($json === false) throw ApiException::fromJsonEncode();
         $result = json_decode($json, true);
         if ($result === false) throw ApiException::fromJsonDecode();
-        $errors = $response['ERRORS'] ?? null;
-        if ($errors) throw ApiException::fromInnocigsErrors($errors);
+        $errors = $result['ERRORS'] ?? null;
+        if ($errors) throw ApiException::fromSupplierErrors($errors);
         return $result;
     }
 

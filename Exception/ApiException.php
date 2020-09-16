@@ -2,75 +2,19 @@
 
 namespace MxcDropshipInnocigs\Exception;
 
-use RuntimeException;
+use MxcDropship\Exception\DropshipException;
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 
-class ApiException extends RuntimeException {
+// This class is not really an exception. It maps to DropshipException.
 
-    // will be thrown by ApiException
-    const NO_RESPONSE       = 1000;
-    const JSON_DECODE       = 1001;
-    const JSON_ENCODE       = 1002;
-    const INVALID_XML_DATA  = 1003;
-    const HTTP_STATUS       = 1004;
-    const INNOCIGS_ERRORS   = 1005;
-
-    // InnoCigs API errors will not be thrown by ApiException
-    // this is a list of all InnoCigs errors, error message provided by InnoCigs
-    //
-    const LOGIN_FAILED                  = 10000;
-    const INVALID_XML                   = 10001;
-    const NO_DROPSHIP_DATA              = 10002;
-    const DROPSHIP_DATA_INCOMPLETE      = 10003;
-    const UNKNOWN_API_FUNCTION          = 10004;
-    const MISSING_ORIGINATOR            = 10005;
-    const INVALID_ORIGINATOR            = 10006;
-    const PAYMENT_LOCKED                = 10007;
-    const PAYMENT_LIMIT_EXCEEDED        = 10008;
-    const XML_ALREADY_UPLOADED          = 20000;
-    const DROPSHIP_DATA_X_INCOMPLETE    = 20001;
-    const ORIGINATOR_DATA_X_MISSING     = 20002;
-    const ORIGINATOR_DATA_X_INCOMPLETE  = 20003;
-    const RECIPIENT_DATA_X_MISSING      = 20004;
-    const RECIPIENT_DATA_X_INCOMPLETE   = 20005;
-    const DROPSHIP_WITHOUT_PRODUCTS     = 20006;
-    const PRODUCT_DEFINITION_ERROR_1    = 20007;
-    const PRODUCT_DEFINITION_ERROR_2    = 20008;
-    const PRODUCT_DEFINITION_ERROR_3    = 20009;
-    const MISSING_ORDERNUMBER           = 20010;
-    const DUPLICATE_ORDERNUMBER         = 20011;
-    const ADDRESS_DATA_ERROR            = 20012;
-    const PRODUCT_NUMBER_MISSING        = 30000;
-    const PRODUCT_NOT_AVAILABLE_1       = 30001;
-    const PRODUCT_NOT_AVAILABLE_2       = 30002;
+class ApiException
+{
     const PRODUCT_UNKNOWN_1             = 30003;
-    const PRODUCT_UNKNOWN_2             = 30004;
-    const PRODUCT_UNKNOWN_3             = 30005;
-    const PRODUCT_UNKNOWN_4             = 30006;
-    const NOT_ONE_ORDER                 = 40001;
-    const HEAD_DATA_MISSING             = 40002;
-    const DELIVERY_ADDRESS_INVALID_1    = 40004;
-    const DELIVERY_ADDRESS_INVALID_2    = 40005;
-    const ORDER_NUMBER_INVALID_1        = 40006;
-    const ORDER_NUMBER_INVALID_2        = 40007;
-    const ORDER_POSITION_ERROR_1        = 40010;
-    const ORDER_POSITION_ERROR_2        = 40011;
-    const ORDER_POSITION_ERROR_3        = 40012;
-    const ORDER_POSITION_ERROR_4        = 40013;
-    const ORDER_POSITION_ERROR_5        = 40014;
-    const ORDER_POSITION_ERROR_6        = 40015;
-    const ORDER_POSITION_ERROR_7        = 40016;
-    const ORDER_POSITION_ERROR_8        = 40017;
-    const ORDER_POSITION_ERROR_9        = 40018;
-    const ORDER_POSITION_ERROR_10       = 40019;
-    const TOO_MANY_API_ACCESSES         = 50000;
-    const MAINTENANCE                   = 50001;
-
-    protected $innocigsErrors = null;
-    protected $httpStatus = null;
 
     // this is a workaround because the InnoCigs API does not return UNKNOWN_PRODUCT
     // if an unknown product get queried via &command=product&model=unknown
     public static function fromEmptyProductInfo() {
+        $supplierId = MxcDropshipInnocigs::getModule()->getId();
         $errors = [
             'errors' => [
                 'error' => [
@@ -79,69 +23,32 @@ class ApiException extends RuntimeException {
                 ]
             ]
         ];
-        return self::fromInnocigsErrors($errors);
+        return DropshipException::fromSupplierErrors($supplierId, $errors);
     }
 
     public static function fromInvalidXML() {
-        $msg = 'InnoCigs API: <br/>Invalid XML data received.';
-        $code = self::INVALID_XML_DATA;
-        return new ApiException($msg, $code);
+        $supplierId = MxcDropshipInnocigs::getModule()->getId();
+        return DropshipException::fromInvalidXml($supplierId);
     }
 
     public static function fromJsonEncode() {
-        $msg = 'InnoCigs API: <br/>Failed to encode XML data to JSON.';
-        $code = self::JSON_ENCODE;
-        return new ApiException($msg, $code);
+        $supplierId = MxcDropshipInnocigs::getModule()->getId();
+        return DropshipException::fromJsonEncode($supplierId);
     }
 
     public static function fromJsonDecode() {
-        $msg = 'InnoCigs API: <br/>Failed to decode JSON data.';
-        $code = self::JSON_DECODE;
-        return new ApiException($msg, $code);
+        $supplierId = MxcDropshipInnocigs::getModule()->getId();
+        return DropshipException::fromJsonDecode($supplierId);
     }
 
-    public static function fromInnocigsErrors(array $errors) {
-        $code = self::INNOCIGS_ERRORS;
-        $msg = 'InnoCigs API error codes available.';
-        $e =  new ApiException($msg, $code);
-        $e->setInnocigsErrors($errors);
-        return $e;
+    public static function fromSupplierErrors(array $errors) {
+        $supplierId = MxcDropshipInnocigs::getModule()->getId();
+        return DropshipException::fromSupplierErrors($supplierId, $errors);
     }
 
     public static function fromHttpStatus(int $status) {
-        $code = $status;
-        $msg = sprintf('InnoCigs API: <br\>HTTP Status: %u', $status);
-        $e = new ApiException($msg, $code);
-        $e->setHttpStatus($status);
-    }
-
-    public function setInnocigsErrors(array $errors)
-    {
-        // a single error was returned
-        if (isset($errors['ERROR']['CODE'])) {
-            $this->innocigsErrors[] = $errors['ERROR'];
-            return;
-        }
-        // multiple errors were returned
-        foreach ($errors['ERROR'] as $error)
-        {
-            $this->innocigsErrors[] = $error;
-        }
-    }
-
-    public function getInnocigsErrors()
-    {
-        return $this->innocigsErrors;
-    }
-
-    public function getHttpStatus()
-    {
-        return $this->httpStatus;
-    }
-
-    public function setHttpStatus($httpStatus): void
-    {
-        $this->httpStatus = $httpStatus;
+        $supplierId = MxcDropshipInnocigs::getModule()->getId();
+        return DropshipException::fromHttpStatus($supplierId, $status);
     }
 }
 

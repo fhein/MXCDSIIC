@@ -4,17 +4,19 @@ namespace MxcDropshipInnocigs\Stock;
 
 use MxcDropship\Dropship\DropshipManager;
 use MxcDropshipInnocigs\Api\ApiClient;
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 
 class StockInfo
 {
     protected $client;
-    protected $supplierId = DropshipManager::SUPPLIER_INNOCIGS;
+    protected $supplierId;
 
     protected $stockCache;
 
     public function __construct(ApiClient $client)
     {
         $this->client = $client;
+        $this->supplierId = MxcDropshipInnocigs::getModule()->getId();
     }
 
     // query the current stock of a detail configured for InnoCigs dropship
@@ -28,11 +30,15 @@ class StockInfo
             'mode' => $mode,
         ];
         $productNumber = $attr['mxcbc_dsi_ic_productnumber'];
-        $instock = $mode == DropshipManager::MODE_OWNSTOCK_ONLY ? 0 : $attr['mxcbc_dsi_ic_instock'];
-        if (! empty($productNumber) && $mode != DropshipManager::MODE_OWNSTOCK_ONLY && $live) {
-            $cachedStock = @$this->stockCache[$productNumber];
-            $instock = $cachedStock ?? $this->client->getStockInfo($productNumber);
-            $this->stockCache[$productNumber] = $instock;
+        if (empty($productNumber)) {
+            $instock = $attr['instock'];
+        } else {
+            $instock = $mode == DropshipManager::MODE_OWNSTOCK_ONLY ? $attr['instock'] : $attr['mxcbc_dsi_ic_instock'];
+            if ($mode != DropshipManager::MODE_OWNSTOCK_ONLY && $live) {
+                $cachedStock = @$this->stockCache[$productNumber];
+                $instock = $cachedStock ?? $this->client->getStockInfo($productNumber);
+                $this->stockCache[$productNumber] = $instock;
+            }
         }
         $stockInfo['instock'] = $instock;
         return $stockInfo;

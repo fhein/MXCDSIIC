@@ -9,6 +9,7 @@ use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropshipInnocigs\Exception\DropshipOrderException;
 use MxcDropship\Dropship\DropshipLogger;
 use MxcDropship\Dropship\DropshipManager;
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 
 class OrderProcessor implements AugmentedObject
 {
@@ -26,11 +27,14 @@ class OrderProcessor implements AugmentedObject
     /** @var DropshipLogger */
     protected $dropshipLog;
 
+    protected $supplierId;
+
     public function __construct(DropshipOrder $dropshipOrder, DropshipLogger $dropshipLog, OrderErrorHandler $errorHandler)
     {
         $this->dropshipOrder = $dropshipOrder;
         $this->errorHandler = $errorHandler;
         $this->dropshipLog = $dropshipLog;
+        $this->supplierId = MxcDropshipInnocigs::getModule()->getId();
     }
 
     // The $order array describes a new order which is paid, so drophip order needs to get send
@@ -73,7 +77,7 @@ class OrderProcessor implements AugmentedObject
         $dropshipPositions = [];
         foreach ($details as $detail) {
             if ($detail['mxcbc_dsi_ic_status'] != 'OK') {
-                if ($detail['mxcbc_dsi_supplier'] !== DropshipManager::SUPPLIER_INNOCIGS) {
+                if ($detail['mxcbc_dsi_supplier'] !== $this->supplierId) {
                     continue;
                 }
                 $dropshipPositions[] = [

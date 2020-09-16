@@ -9,6 +9,7 @@ use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropship\Dropship\DropshipManager;
 use MxcDropshipInnocigs\Jobs\UpdatePrices;
 use MxcDropshipInnocigs\Jobs\UpdateStock;
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use MxcDropshipInnocigs\Stock\StockInfo;
 use Throwable;
 
@@ -24,34 +25,24 @@ class DropshipEventListener implements AugmentedObject
 
     public function onUpdatePrices(EventInterface $e)
     {
-        $result = [
+        // may throw
+        $this->services->get(UpdatePrices::class)->run();
+        return [
             'code' => DropshipManager::NO_ERROR,
-            'supplierId' => DropshipManager::SUPPLIER_INNOCIGS,
+            'supplierId' => MxcDropshipInnocigs::getModule()->getId(),
             'message' => 'Prices successfully updated.'
         ];
-        try {
-            $this->services->get(UpdatePrices::class)->run();
-        } catch (Throwable $e) {
-            $result['code'] = $e->getCode();
-            $result['message'] = $e->getMessage();
-        }
-        return $result;
     }
 
     public function onUpdateStock(EventInterface $e)
     {
-        $result = [
+        // may throw
+        $this->services->get(UpdateStock::class)->run();
+        return [
             'code' => DropshipManager::NO_ERROR,
-            'supplierId' => DropshipManager::SUPPLIER_INNOCIGS,
+            'supplierId' => MxcDropshipInnocigs::getModule()->getId(),
             'message' => 'Stock successfully updated.'
         ];
-        try {
-            $this->services->get(UpdateStock::class)->run();
-        } catch (Throwable $e) {
-            $result['code'] = $e->getCode();
-            $result['message'] = $e->getMessage();
-        }
-        return $result;
     }
 
     public function onGetStockInfo(EventInterface $e)
