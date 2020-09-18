@@ -24,17 +24,17 @@ class ArticleRegistry implements AugmentedObject
     const ERROR_INVALID_ARGUMENT        = 3;
 
     private $select;
-    private $supplierId;
+    private $supplier;
 
     public function init()
     {
-        $this->supplierId = MxcDropshipInnocigs::getModule()->getId();
+        $this->supplier = MxcDropshipInnocigs::getModule()->getName();
     }
 
     // @todo: mxcbc_dsi_mode should be set somewhere else, because it is not Innocigs specific
     private $fields = [
         'mxcbc_dsi_mode'              => null,
-        'mxc_dsi_supplier_id'         => null,
+        'mxc_dsi_supplier'            => null,
         'mxcbc_dsi_ic_registered'     => false,
         'mxcbc_dsi_ic_status'         => null,
         'mxcbc_dsi_ic_productnumber'  => null,
@@ -79,7 +79,7 @@ class ArticleRegistry implements AugmentedObject
             'mxcbc_dsi_ic_retailprice'    => round($variant->getRecommendedRetailPrice(), 2),
             'mxcbc_dsi_ic_instock'        => $stockInfo,
             'mxcbc_dsi_mode'              => $deliveryMode,
-            'mxcbc_dsi_supplier_id'       => $this->supplierId,
+            'mxcbc_dsi_supplier'          => $this->supplier,
             'mxcbc_dsi_ic_status'         => ArticleRegistry::NO_ERROR,
             'mxcbc_dsi_ic_registered'     => true,
         ];
@@ -110,7 +110,7 @@ class ArticleRegistry implements AugmentedObject
             'mxcbc_dsi_ic_retailprice'    => StringTool::toFloat($info['recommendedRetailPrice']),
             'mxcbc_dsi_ic_instock'        => $this->client->getStockInfo($productNumber),
             'mxcbc_dsi_ic_status'         => self::NO_ERROR,
-            'mxcbc_dsi_supplier_id'       => $this->supplierId,
+            'mxcbc_dsi_supplier'          => $this->supplier,
             'mxcbc_dsi_ic_registered'     => true,
             // should be moved to MxcDropship context, because it is not Innocigs specific
             'mxcbc_dsi_mode'              => $delivery,

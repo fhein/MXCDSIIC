@@ -14,7 +14,7 @@ class ApiException
     // this is a workaround because the InnoCigs API does not return UNKNOWN_PRODUCT
     // if an unknown product get queried via &command=product&model=unknown
     public static function fromEmptyProductInfo() {
-        $supplierId = MxcDropshipInnocigs::getModule()->getId();
+        $supplier = MxcDropshipInnocigs::getModule()->getName();
         $errors = [
             'errors' => [
                 'error' => [
@@ -23,32 +23,32 @@ class ApiException
                 ]
             ]
         ];
-        return DropshipException::fromSupplierErrors($supplierId, $errors);
+        return DropshipException::fromSupplierErrors($supplier, $errors);
     }
 
     public static function fromInvalidXML() {
-        $supplierId = MxcDropshipInnocigs::getModule()->getId();
-        return DropshipException::fromInvalidXml($supplierId);
+        $supplier = MxcDropshipInnocigs::getModule()->getName();
+        return DropshipException::fromInvalidXml($supplier);
     }
 
     public static function fromJsonEncode() {
-        $supplierId = MxcDropshipInnocigs::getModule()->getId();
-        return DropshipException::fromJsonEncode($supplierId);
+        $supplier = MxcDropshipInnocigs::getModule()->getName();
+        return DropshipException::fromJsonEncode($supplier);
     }
 
     public static function fromJsonDecode() {
-        $supplierId = MxcDropshipInnocigs::getModule()->getId();
-        return DropshipException::fromJsonDecode($supplierId);
+        $supplier = MxcDropshipInnocigs::getModule()->getName();
+        return DropshipException::fromJsonDecode($supplier);
     }
 
     public static function fromSupplierErrors(array $errors) {
-        $supplierId = MxcDropshipInnocigs::getModule()->getId();
-        return DropshipException::fromSupplierErrors($supplierId, $errors);
+        $supplier = MxcDropshipInnocigs::getModule()->getName();
+        return DropshipException::fromSupplierErrors($supplier, $errors);
     }
 
     public static function fromHttpStatus(int $status) {
-        $supplierId = MxcDropshipInnocigs::getModule()->getId();
-        return DropshipException::fromHttpStatus($supplierId, $status);
+        $supplier = MxcDropshipInnocigs::getModule()->getName();
+        return DropshipException::fromHttpStatus($supplier, $status);
     }
 }
 

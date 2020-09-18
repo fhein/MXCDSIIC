@@ -9,14 +9,14 @@ use MxcDropshipInnocigs\MxcDropshipInnocigs;
 class StockInfo
 {
     protected $client;
-    protected $supplierId;
+    protected $supplier;
 
     protected $stockCache;
 
     public function __construct(ApiClient $client)
     {
         $this->client = $client;
-        $this->supplierId = MxcDropshipInnocigs::getModule()->getId();
+        $this->supplier = MxcDropshipInnocigs::getModule()->getName();
     }
 
     // query the current stock of a detail configured for InnoCigs dropship
@@ -26,7 +26,7 @@ class StockInfo
     {
         $mode = $attr['mxcbc_dsi_mode'] ?? DropshipManager::MODE_OWNSTOCK_ONLY;
         $stockInfo = [
-            'supplierId' => $this->supplierId,
+            'supplier' => $this->supplier,
             'mode' => $mode,
         ];
         $productNumber = $attr['mxcbc_dsi_ic_productnumber'];

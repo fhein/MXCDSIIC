@@ -29,7 +29,7 @@ class DropshipEventListener implements AugmentedObject
         $this->services->get(UpdatePrices::class)->run();
         return [
             'code' => DropshipManager::NO_ERROR,
-            'supplierId' => MxcDropshipInnocigs::getModule()->getId(),
+            'supplier' => MxcDropshipInnocigs::getModule()->getName(),
             'message' => 'Prices successfully updated.'
         ];
     }
@@ -40,7 +40,7 @@ class DropshipEventListener implements AugmentedObject
         $this->services->get(UpdateStock::class)->run();
         return [
             'code' => DropshipManager::NO_ERROR,
-            'supplierId' => MxcDropshipInnocigs::getModule()->getId(),
+            'supplier' => MxcDropshipInnocigs::getModule()->getName(),
             'message' => 'Stock successfully updated.'
         ];
     }

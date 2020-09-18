@@ -27,14 +27,14 @@ class OrderProcessor implements AugmentedObject
     /** @var DropshipLogger */
     protected $dropshipLog;
 
-    protected $supplierId;
+    protected $supplier;
 
     public function __construct(DropshipOrder $dropshipOrder, DropshipLogger $dropshipLog, OrderErrorHandler $errorHandler)
     {
         $this->dropshipOrder = $dropshipOrder;
         $this->errorHandler = $errorHandler;
         $this->dropshipLog = $dropshipLog;
-        $this->supplierId = MxcDropshipInnocigs::getModule()->getId();
+        $this->supplier = MxcDropshipInnocigs::getModule()->getName();
     }
 
     // The $order array describes a new order which is paid, so drophip order needs to get send
@@ -77,7 +77,7 @@ class OrderProcessor implements AugmentedObject
         $dropshipPositions = [];
         foreach ($details as $detail) {
             if ($detail['mxcbc_dsi_ic_status'] != 'OK') {
-                if ($detail['mxcbc_dsi_supplier'] !== $this->supplierId) {
+                if ($detail['mxcbc_dsi_supplier'] !== $this->supplier) {
                     continue;
                 }
                 $dropshipPositions[] = [

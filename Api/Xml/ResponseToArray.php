@@ -19,15 +19,6 @@ class ResponseToArray implements AugmentedObject
     protected $logPath;
     protected $logPathRow;
 
-    protected $supplierId;
-
-    public function __construct()
-    {
-        /** @var DropshipModule $module */
-        $module = MxcDropshipInnocigs::getModule();
-        $this->supplierId = $module->getId();
-    }
-
     public function modelToArray(DOMElement $model): array
     {
         $item = [];

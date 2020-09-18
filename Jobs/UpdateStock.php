@@ -21,7 +21,7 @@ class UpdateStock implements AugmentedObject
     /** @var ApiClient */
     protected $client;
 
-    protected $supplierId;
+    protected $supplier;
 
     protected $companion;
 
@@ -31,7 +31,7 @@ class UpdateStock implements AugmentedObject
     {
         $this->companion = $companion;
         $this->client = $client;
-        $this->supplierId = MxcDropshipInnocigs::getModule()->getId();
+        $this->supplier = MxcDropshipInnocigs::getModule()->getName();
     }
 
     public function run()
@@ -55,7 +55,7 @@ class UpdateStock implements AugmentedObject
             $detail = $repository->find($detailId);
             $detail->setInStock($instock);
             ArticleTool::setDetailAttribute($detailId, 'mxcbc_dsi_ic_instock', intval($instock));
-            ArticleTool::setDetailAttribute($detailId, 'mxcbc_dsi_supplier_id', $this->supplierId);
+            ArticleTool::setDetailAttribute($detailId, 'mxcbc_dsi_supplier', $this->supplier);
             // dropshippers companion attributes (legacy dropship support)
             if (! $this->isCompanionInstalled()) continue;
             ArticleTool::setDetailAttribute($detailId, 'dc_ic_instock', intval($instock));
