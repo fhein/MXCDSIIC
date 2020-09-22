@@ -99,16 +99,16 @@ class DropshipOrder implements AugmentedObject
         $this->positions = [];
 
         $this->setOriginator(
-            $this->config->get('mxcbc_dsi_ic_company'),
-            $this->config->get('mxcbc_dsi_ic_department'),
-            $this->config->get('mxcbc_dsi_ic_first_name'),
-            $this->config->get('mxcbc_dsi_ic_last_name'),
-            $this->config->get('mxcbc_dsi_ic_street'),
-            $this->config->get('mxcbc_dsi_ic_zip'),
-            $this->config->get('mxcbc_dsi_ic_city'),
-            $this->config->get('mxcbc_dsi_ic_country_code'),
-            $this->config->get('mxcbc_dsi_ic_mail'),
-            $this->config->get('mxcbc_dsi_ic_phone')
+            $this->config->get('mxcbc_dsi_ic_company', 'vapee.de') ?? '',
+            $this->config->get('mxcbc_dsi_ic_department', 'maxence operations gmbh') ?? '',
+            $this->config->get('mxcbc_dsi_ic_first_name') ?? '',
+            $this->config->get('mxcbc_dsi_ic_last_name') ?? '',
+            $this->config->get('mxcbc_dsi_ic_street', 'Am Weißen Stein 1') ?? '',
+            $this->config->get('mxcbc_dsi_ic_zip', '41541') ?? '',
+            $this->config->get('mxcbc_dsi_ic_city', 'Dormagen') ?? '',
+            $this->config->get('mxcbc_dsi_ic_country_code', 'DE') ?? '',
+            $this->config->get('mxcbc_dsi_ic_mail') ?? '',
+            $this->config->get('mxcbc_dsi_ic_phone') ?? ''
         );
 
         $this->setRecipientFromArray($shippingAddress);
@@ -140,7 +140,7 @@ class DropshipOrder implements AugmentedObject
             'COMPANY'        => ucFirst($shippingaddress['company']),
             'COMPANY2'       => ucFirst($shippingaddress['department']),
             'FIRSTNAME'      => ucFirst($shippingaddress['firstname']),
-            'LASTNAME'       => ucFirst($shippingaddress['lastame']),
+            'LASTNAME'       => ucFirst($shippingaddress['lastname']),
             'STREET_ADDRESS' => ucFirst($shippingaddress['street']),
             'CITY'           => ucFirst($shippingaddress['city']),
             'POSTCODE'       => $shippingaddress['zipcode'],
@@ -151,7 +151,6 @@ class DropshipOrder implements AugmentedObject
         if (! empty($errors)) {
             throw DropshipOrderException::fromInvalidRecipientAddress($errors);
         }
-
     }
 
     public function setRecipient(

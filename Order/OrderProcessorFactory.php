@@ -5,6 +5,7 @@ namespace MxcDropshipInnocigs\Order;
 use MxcCommons\Interop\Container\ContainerInterface;
 use MxcCommons\ServiceManager\Factory\FactoryInterface;
 use MxcDropship\Dropship\DropshipLogger;
+use MxcDropship\MxcDropship;
 
 class OrderProcessorFactory implements FactoryInterface
 {
@@ -12,7 +13,7 @@ class OrderProcessorFactory implements FactoryInterface
     {
         $dropshipOrder = $container->get(DropshipOrder::class);
         $errorHandler = $container->get(OrderErrorHandler::class);
-        $dropshipLogger = $container->get(DropshipLogger::class);
+        $dropshipLogger = MxcDropship::getServices()->get(DropshipLogger::class);
         return new OrderProcessor($dropshipOrder, $dropshipLogger, $errorHandler);
     }
 }

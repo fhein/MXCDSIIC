@@ -37,38 +37,39 @@ class OrderProcessor implements AugmentedObject
         $this->supplier = MxcDropshipInnocigs::getModule()->getName();
     }
 
-    // The $order array describes a new order which is paid, so drophip order needs to get send
-    protected function processOrder(string $orderNumber, array $order)
+    // $order is a join of s_order and s_order_attributes, order id is $order['orderID']
+    public function processOrder(array $order)
     {
-        $result = [DropshipManager::NO_ERROR, []];
+        $result = [DropshipManager::STATUS_OK, []];
         $orderId = $order['orderID'];
-        $details = $order['details'];
+        $sql = '
+            SELECT * FROM s_order_details od
+            LEFT JOIN s_order_details_attributes oda ON oda.detailID = od.id
+            WHERE od.orderID = :orderId AND oda.mxcbc_dsi_supplier = :supplier
+        ';
+        $details = $this->db->fetchAll($sql, ['orderId' => $orderId, 'supplier' => $this->supplier]);
+        // we have nothing to do on this order so we report OK
+        if (empty($details)) return $result;
+
         $shippingAddress = $this->getShippingAddress($orderId);
-
-        // get all order positions which are scheduled for InnoCigs
-        $positions = $this->getOrderPositions($details);
-        if (empty($positions)) {
-            return [ DropshipManager::NO_ERROR, []];
-        }
-
         try {
-            // throws if the shipping address does not comply to the InnoCigs address spec
             $this->dropshipOrder->create($shippingAddress);
-            foreach ($positions as $position) {
-                $this->dropshipOrder->addPosition(
-                    $position['productnumber'],
-                    $position['quantity']
-                );
-            }
-            // throws on API errors and order position validation errors
-            $info = $this->dropshipOrder->send();
-            $this->updateDropshipInfo($positions, $info);
-        } catch (DropshipOrderException $e) {
-            $this->errorHandler->handleOrderException($e, $order);
-        }
 
-        $this->postProcessOrder();
+            foreach ($details as $detail) {
+                $sql = '
+                    SELECT aa.mxcbc_dsi_ic_productnumber FROM s_articles_attributes aa
+                    WHERE aa.articledetailsID = :articleDetailId
+                ';
+                $productNumber = $this->db->fetchOne($sql, ['articleDetailId' => $detail['articleDetailID']]);
+                $this->dropshipOrder->addPosition($productNumber, $detail['quantity']);
+            }
+            $info = $this->dropshipOrder->send();
+        } catch (DropshipOrderException $e) {
+            $result = $this->errorHandler->handleOrderException($e, $order);
+        }
+        $this->postProcessOrder($result);
         return $result;
+
     }
 
     // Loop through order details and get detail id, product number and ordered amount
@@ -90,7 +91,7 @@ class OrderProcessor implements AugmentedObject
         return $dropshipPositions;
     }
 
-    protected function postProcessOrder()
+    protected function postProcessOrder(array $result)
     {
 //        if (Shopware()->Config()->get('dc_mail_send') || $errorCode) {
 //            $mail = Shopware()->Models()->getRepository('\Shopware\Models\Mail\Mail')->findOneBy(['name' => 'DC_DROPSHIP_ORDER']);

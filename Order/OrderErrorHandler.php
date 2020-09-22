@@ -4,6 +4,7 @@ namespace MxcDropshipInnocigs\Order;
 
 use MxcCommons\Log\LoggerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
+use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\Exception\ApiException;
 use MxcDropshipInnocigs\Exception\DropshipOrderException;
 use MxcDropship\Dropship\DropshipLogger;
@@ -16,22 +17,22 @@ class OrderErrorHandler implements AugmentedObject
     const ORDER_RETRY = 2;
 
     protected $errorResponses = [
-        ApiException::NO_RESPONSE => [
+        DropshipException::MODULE_API_NO_RESPONSE => [
             'message'           => 'InnoCigs server does not respond. Order not transmitted. Will attempt again.',
             'severity'          => DropshipLogger::ERR,
             'action'            => self::ORDER_RETRY,
         ],
-        ApiException::JSON_ENCODE => [
+        DropshipException::MODULE_API_JSON_ENCODE => [
             'message'           => 'Failed to decode response from InnoCigs. Order status unknown. Please contact InnoCigs. Order halted.',
             'severity'          => DropshipLogger::ERR,
             'action'            => self::ORDER_RETRY,
         ],
-        ApiException::INVALID_XML_DATA => [
+        DropshipException::MODULE_API_INVALID_XML_DATA => [
             'message'           => 'InnoCigs response is malformed and invalid XML. Order status unknown. Please contact InnoCigs. Order halted.',
             'severity'          => DropshipLogger::ERR,
             'action'            => self::ORDER_RETRY,
         ],
-        ApiException::HTTP_STATUS => [
+        DropshipException::MODULE_API_HTTP_STATUS => [
             'message'           => 'API call failed. InnoCigs HTTP status: %s. Order not transmitted. Will attempt again.',
             'severity'          => DropshipLogger::ERR,
             'action'            => self::ORDER_RETRY,
@@ -73,7 +74,6 @@ class OrderErrorHandler implements AugmentedObject
                 $errors = $e->getAddressErrors();
                 break;
             case DropshipOrderException::API_EXCEPTION:
-                /** @var ApiException $apiException */
                 $apiException = $e->getPrevious();
                 $errors = $this->handleApiException($apiException);
                 break;
@@ -83,13 +83,13 @@ class OrderErrorHandler implements AugmentedObject
         }
     }
 
-    protected function handleApiException(ApiException $e)
+    protected function handleApiException(DropshipException $e)
     {
         $code = $e->getCode();
         $response = $this->errorResponses[$code];
 
         // if the code is HTTP status we have to sprintf the HTTP status to the log message
-        if ($code === ApiException::HTTP_STATUS) {
+        if ($code === DropshipException::MODULE_API_SUPPLIER_ERRORS) {
             $response['message'] = sprintf($response['message'], $e->getHttpStatus());
         }
 
@@ -105,7 +105,6 @@ class OrderErrorHandler implements AugmentedObject
             $response['message'],
             $this->order['ordernumber']
         );
-
     }
 
 }

@@ -47,13 +47,12 @@ class UpdateStock implements AugmentedObject
         $details = $this->db->fetchAll($sql);
         $repository = $this->modelManager->getRepository(Detail::class);
 
-        /** @var Detail $detail */
         foreach ($details as $detail) {
             $detailId = $detail['detailId'];
             $productNumber = $detail['productNumber'];
             $instock = @$stockInfo[$productNumber] ?? 0;
-            $detail = $repository->find($detailId);
-            $detail->setInStock($instock);
+            $swDetail = $repository->find($detailId);
+            $swDetail->setInStock($instock);
             ArticleTool::setDetailAttribute($detailId, 'mxcbc_dsi_ic_instock', intval($instock));
             ArticleTool::setDetailAttribute($detailId, 'mxcbc_dsi_supplier', $this->supplier);
             // dropshippers companion attributes (legacy dropship support)
