@@ -2,26 +2,19 @@
 
 namespace MxcDropshipInnocigs\Order;
 
+use Google\Protobuf\Api;
 use MxcCommons\Plugin\Service\ClassConfigAwareTrait;
-use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\Exception\ApiException;
-use MxcDropshipInnocigs\Exception\DropshipOrderException;
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use SimpleXMLElement;
 use Shopware_Components_Config;
 use MxcDropshipInnocigs\Api\ApiClient;
 
 class DropshipOrder implements AugmentedObject
 {
-    // Auftrag noch nicht überträgen
-    const ORDER_STATUS_OPEN         = 0;
-    // Auftrag erfolgreich übertragen, warten auf Tracking-Daten
-    const ORDER_STATUS_TRANSFERRED  = 1;
-    // Trackingdaten empfangen, Dropshipauftrag abgeschlossen
-    const ORDER_STATUS_CLOSED       = 2;
-    // Auftrag konnte nicht übertragen werden, Auftrag wird ignoriert, manuelles Eingreifen erforderlich
-    const ORDER_STATUS_ERROR        = 99;
+    use ClassConfigAwareTrait;
 
     // All documented InnoCigs API errors
     const LOGIN_FAILED                  = 10000;
@@ -70,33 +63,33 @@ class DropshipOrder implements AugmentedObject
     const ORDER_POSITION_ERROR_9        = 40018;
     const ORDER_POSITION_ERROR_10       = 40019;
     const TOO_MANY_API_ACCESSES         = 50000;
-    const MAINTENANCE                   = 50001;
 
-    use ClassConfigAwareTrait;
-    use ModelManagerAwareTrait;
+    const MAINTENANCE                   = 50001;
 
     private $positions = [];
     private $orderNumber;
     private $originator;
     private $recipient;
-    private $recipientErrors;
+    private $module;
 
     /** @var Shopware_Components_Config */
     private $config;
-
     private $client;
 
     public function __construct(Shopware_Components_Config $config, ApiClient $client)
     {
         $this->config = $config;
         $this->client = $client;
+        $this->module = MxcDropshipInnocigs::getModule()->getName();
     }
 
-    public function create(array $shippingAddress)
+    public function create(string $orderNumber, array $shippingAddress)
     {
         $this->recipient = null;
         $this->originator = null;
         $this->positions = [];
+
+        $this->orderNumber = $orderNumber;
 
         $this->setOriginator(
             $this->config->get('mxcbc_dsi_ic_company', 'vapee.de') ?? '',
@@ -112,116 +105,6 @@ class DropshipOrder implements AugmentedObject
         );
 
         $this->setRecipientFromArray($shippingAddress);
-    }
-
-    public function addPosition(string $productnumber, int $quantity)
-    {
-        $this->positions[] = [
-            'PRODUCT' => [
-                'PRODUCTS_MODEL' => $productnumber,
-                'QUANTITY'       => $quantity,
-            ],
-        ];
-    }
-
-
-    public function setOrderNumber(string $orderNumber)
-    {
-        $this->orderNumber = $orderNumber;
-    }
-
-    /** Use fields as from s_order_shippingaddress
-     *  Supply additional entry 'iso' for the country iso code
-     * @param array $shippingaddress
-     */
-    public function setRecipientFromArray(array $shippingaddress)
-    {
-        $this->recipient = [
-            'COMPANY'        => ucFirst($shippingaddress['company']),
-            'COMPANY2'       => ucFirst($shippingaddress['department']),
-            'FIRSTNAME'      => ucFirst($shippingaddress['firstname']),
-            'LASTNAME'       => ucFirst($shippingaddress['lastname']),
-            'STREET_ADDRESS' => ucFirst($shippingaddress['street']),
-            'CITY'           => ucFirst($shippingaddress['city']),
-            'POSTCODE'       => $shippingaddress['zipcode'],
-            'COUNTRY_CODE'   => $shippingaddress['iso'],
-        ];
-
-        $errors = $this->validateRecipient();
-        if (! empty($errors)) {
-            throw DropshipOrderException::fromInvalidRecipientAddress($errors);
-        }
-    }
-
-    public function setRecipient(
-        string $company,
-        string $company2,
-        string $firstName,
-        string $lastName,
-        string $streetAddress,
-        string $zipCode,
-        string $city,
-        string $countryCode
-    ) {
-        $this->recipient = [
-            'COMPANY'        => ucFirst($company),
-            'COMPANY2'       => ucFirst($company2),
-            'FIRSTNAME'      => ucFirst($firstName),
-            'LASTNAME'       => ucFirst($lastName),
-            'STREET_ADDRESS' => ucFirst($streetAddress),
-            'CITY'           => ucFirst($city),
-            'POSTCODE'       => $zipCode,
-            'COUNTRY_CODE'   => $countryCode,
-        ];
-
-        $errors = $this->validateRecipient();
-
-        if (! empty($errors)) {
-            throw DropshipOrderException::fromInvalidRecipientAddress($errors);
-        }
-    }
-
-    protected function validateRecipient()
-    {
-        $errors = [];
-        if (strlen($this->recipient['COMPANY']) > 30) {
-            $errors[] = DropshipOrderException::RECIPIENT_COMPANY_TOO_LONG;
-        }
-
-        if (strlen($this->recipient['COMPANY2']) > 30) {
-            $errors[] = DropshipOrderException::RECIPIENT_COMPANY2_TOO_LONG;
-        }
-        
-        $firstName = $this->recipient['FIRSTNAME'];
-        if (strlen($firstName) < 2) {
-            $errors[] = DropshipOrderException::RECIPIENT_FIRST_NAME_TOO_SHORT;
-        }
-
-        $lastName = $this->recipient['LASTNAME'];
-        if (strlen($lastName) < 2) {
-            $errors[] = DropshipOrderException::RECIPIENT_LAST_NAME_TOO_SHORT;
-        }
-
-        if (strlen($firstName.$lastName) > 34) {
-            $errors[] = DropshipOrderException::RECIPIENT_NAME_TOO_LONG;
-        }
-
-        if (strlen($this->recipient['STREET_ADDRESS']) > 35) {
-            $errors[] = DropshipOrderException::RECIPIENT_STREET_ADDRESS_TOO_LONG;
-        }
-
-        if (strlen($this->recipient['STREET_ADDRESS']) < 5) {
-            $errors[] = DropshipOrderException::RECIPIENT_STREET_ADDRESS_TOO_SHORT;
-        }
-
-        if (strlen($this->recipient['POSTCODE']) < 4) {
-            $errors[] = DropshipOrderException::RECIPIENT_ZIP_TOO_SHORT;
-        }
-
-        if (strlen($this->recipient['CITY']) < 3) {
-            $errors[] = DropshipOrderException::RECIPIENT_CITY_TOO_SHORT;
-        }
-        return $errors;
     }
 
     public function setOriginator(
@@ -248,6 +131,56 @@ class DropshipOrder implements AugmentedObject
             'EMAIL'          => $email,
             'TELEPHONE'      => $phoneNumber,
         ];
+    }
+
+    /** Use fields as from s_order_shippingaddress
+     *  Supply additional entry 'iso' for the country iso code
+     * @param array $shippingaddress
+     */
+    public function setRecipientFromArray(array $shippingaddress)
+    {
+        $this->recipient = [
+            'COMPANY'        => ucFirst($shippingaddress['company']),
+            'COMPANY2'       => ucFirst($shippingaddress['department']),
+            'FIRSTNAME'      => ucFirst($shippingaddress['firstname']),
+            'LASTNAME'       => ucFirst($shippingaddress['lastname']),
+            'STREET_ADDRESS' => ucFirst($shippingaddress['street']),
+            'CITY'           => ucFirst($shippingaddress['city']),
+            'POSTCODE'       => $shippingaddress['zipcode'],
+            'COUNTRY_CODE'   => $shippingaddress['iso'],
+        ];
+    }
+
+    public function addPosition(string $productnumber, int $quantity)
+    {
+        $this->positions[] = [
+            'PRODUCT' => [
+                'PRODUCTS_MODEL' => $productnumber,
+                'QUANTITY'       => $quantity,
+            ],
+        ];
+    }
+
+    public function send()
+    {
+        $positionsValid = $this->validateOrderPositions();
+        if (! $positionsValid) {
+            throw ApiException::fromInvalidOrderPositions($this->positions);
+        }
+        $data = $this->client->sendOrder($this->getXmlRequest());
+        $errors = @$data['ERRORS'] ?? [];
+        if ($data['status'] == 'NOK') {
+            throw ApiException::fromDropshipNOK($errors, $data);
+        }
+        if (! empty($errors)) {
+            throw ApiException::fromSupplierErrors($errors['ERRORS']);
+        }
+        return $data;
+    }
+
+    public function setOrderNumber(string $orderNumber)
+    {
+        $this->orderNumber = $orderNumber;
     }
 
     public function getXmlRequest(bool $pretty = false)
@@ -305,15 +238,15 @@ class DropshipOrder implements AugmentedObject
             try {
                 $instock = $this->client->getStockInfo($position['PRODUCTS_MODEL']);
                 if ($instock == 0) {
-                    $this->setPositionError($position, DropshipOrderException::PRODUCT_OUT_OF_STOCK, 'Product out of stock.');
+                    $this->setPositionError($position, DropshipException::PRODUCT_OUT_OF_STOCK, 'Product out of stock.');
                     $position['errorcode'];
                 } elseif ($instock < $position['QUANTITY']) {
-                    $this->setPositionError($position, DropshipOrderException::POSITION_EXCEEDS_STOCK, 'Position exceeds stock.');
+                    $this->setPositionError($position, DropshipException::POSITION_EXCEEDS_STOCK, 'Position exceeds stock.');
                 }
             } catch (DropshipException $e) {
                 $code = $e->getCode();
                 if ($code === DropshipException::MODULE_API_SUPPLIER_ERRORS) {
-                    $errors = $e->getInnocigsErrors();
+                    $errors = $e->getSupplierErrors();
                     // if there is more than one error, we can not handle that
                     if (count($errors) > 1) {
                         throw $e;
@@ -325,45 +258,22 @@ class DropshipOrder implements AugmentedObject
                         $code >= self::PRODUCT_UNKNOWN_1
                         && $code <= self::PRODUCT_UNKNOWN_4
                     ) {
-                        $this->setPositionError($position, DropshipOrderException::PRODUCT_UNKNOWN, $message);
+                        $this->setPositionError($position, DropshipException::PRODUCT_UNKNOWN, $message);
                         $result = false;
                     } elseif ( // handle product not available errors
                         $code == self::PRODUCT_NOT_AVAILABLE_1
                         || $code == self::PRODUCT_NOT_AVAILABLE_2
                     ) {
-                        $this->setPositionError($position, DropshipOrderException::PRODUCT_NOT_AVAILABLE, $message);
+                        $this->setPositionError($position, DropshipException::PRODUCT_NOT_AVAILABLE, $message);
                         $result = false;
                     } elseif ($code == self::PRODUCT_NUMBER_MISSING) {
-                        $this->setPositionError($position, DropshipOrderException::PRODUCT_NUMBER_MISSING, $message);
+                        $this->setPositionError($position, DropshipException::PRODUCT_NUMBER_MISSING, $message);
                         $result = false;
                     }
                 }
             }
         }
         return $result;
-    }
-
-    public function send()
-    {
-        $positionsValid = $this->validateOrderPositions();
-        if (! $positionsValid) {
-            throw DropshipOrderException::fromInvalidOrderPositions($this->positions);
-        }
-        try {
-            $data = $this->client->sendOrder($this->getXmlRequest());
-            $errors = @$data['ERRORS'] ?? [];
-            if ($data['status'] == 'NOK') {
-                throw DropshipOrderException::fromDropshipNOK($errors, $data);
-            }
-            if (! empty($errors)) {
-                throw DropshipOrderException::fromInnocigsErrors($errors['ERRORS']);
-            }
-        } catch (DropshipException $e) {
-            if ($e->getCode() === DropshipException::MODULE_API_SUPPLIER_ERRORS) {
-                throw DropshipOrderException::fromInnocigsErrors($e->getSupplierErrors());
-            }
-            throw DropshipOrderException::fromApiException($e);
-        }
     }
 
     public function test(bool $pretty = true)
@@ -384,9 +294,5 @@ class DropshipOrder implements AugmentedObject
         $this->setOrderNumber('9999');
 
         return $this->getXmlRequest($pretty);
-    }
-
-    public function getRecipientErrors() {
-        return $this->recipientErrors;
     }
 }

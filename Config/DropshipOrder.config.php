@@ -1,5 +1,9 @@
 <?php
 
+use MxcDropship\Dropship\DropshipLogger;
+use MxcDropship\Dropship\DropshipManager;
+use MxcDropship\Exception\DropshipException;
+
 return [
     'originator' => [
         'company' => 'maxence operations gmbh',
@@ -12,5 +16,5 @@ return [
         'countrycode' => 'DE',
         'email' => 'info@vapee.de',
         'phone' => '+49-2133-259925'
-    ]
+    ],
 ];

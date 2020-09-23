@@ -50,5 +50,24 @@ class ApiException
         $supplier = MxcDropshipInnocigs::getModule()->getName();
         return DropshipException::fromHttpStatus($supplier, $status);
     }
+
+    public static function fromInvalidOrderPositions($positionErrors)
+    {
+        $supplier = MxcDropshipInnocigs::getModule()->getName();
+        return DropshipException::fromInvalidOrderPositions($supplier, $positionErrors);
+    }
+
+    public static function fromInvalidRecipientAddress(array $errors)
+    {
+        $supplier = MxcDropshipInnocigs::getModule()->getName();
+        return DropshipException::fromInvalidRecipientAddress($supplier, $errors);
+    }
+
+    public static function fromDropshipNOK(array $errors, array $data)
+    {
+        $supplier = MxcDropshipInnocigs::getModule()->getName();
+        return DropshipException::fromDropshipNOK($supplier, $errors, $data);
+    }
+
 }
 

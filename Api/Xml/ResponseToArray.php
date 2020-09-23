@@ -17,7 +17,7 @@ class ResponseToArray implements AugmentedObject
 
     protected $logEnabled = false;
     protected $logPath;
-    protected $logPathRow;
+    protected $logPathRaw;
 
     public function modelToArray(DOMElement $model): array
     {
@@ -104,10 +104,10 @@ class ResponseToArray implements AugmentedObject
         }
 
         $this->logPath = Shopware()->DocPath() . 'var/log/mxc_dropship_innocigs/api_data.xml';
-        $this->logPathRow = Shopware()->DocPath() . 'var/log/mxc_dropship_innocigs/api_data_raw.xml';
+        $this->logPathRaw = Shopware()->DocPath() . 'var/log/mxc_dropship_innocigs/api_data_raw.xml';
 
         file_put_contents($this->logPath, "");
-        file_put_contents($this->logPathRow, "");
+        file_put_contents($this->logPathRaw, "");
     }
 
     protected function logXMLErrors(array $errors)
@@ -127,7 +127,7 @@ class ResponseToArray implements AugmentedObject
         $pretty = tidy_repair_string($xmlLine, ['input-xml'=> 1, 'indent' => 1, 'wrap' => 0]);
 
         file_put_contents($this->logPath, $pretty, FILE_APPEND | LOCK_EX);
-        file_put_contents($this->logPathRow, $xmlLine, FILE_APPEND | LOCK_EX);
+        file_put_contents($this->logPathRaw, $xmlLine, FILE_APPEND | LOCK_EX);
     }
 
     public function logXML($xml)

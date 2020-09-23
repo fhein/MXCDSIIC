@@ -11,7 +11,6 @@ use MxcDropshipInnocigs\Article\ArticleRegistry;
 use MxcDropshipInnocigs\Api\Credentials;
 use MxcDropshipInnocigs\Order\DropshipOrder;
 use MxcDropshipInnocigs\Companion\DropshippersCompanion;
-use MxcDropshipInnocigs\Order\OrderErrorHandler;
 use MxcDropshipInnocigs\Order\OrderProcessor;
 use MxcDropshipInnocigs\Stock\StockInfo;
 use MxcDropshipInnocigs\Api\Xml\HttpReader;
@@ -40,7 +39,6 @@ return [
 
     'services'     => [
         'magicals'  => [
-            OrderErrorHandler::class,
             DropshipOrder::class,
             ArticleRegistry::class,
             ApiClient::class,

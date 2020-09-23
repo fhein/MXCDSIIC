@@ -32,12 +32,11 @@ class Shopware_Controllers_Backend_MxcDsiArticleInnocigs extends Shopware_Contro
             $registry = $services->get(ArticleRegistry::class);
 
             $request = $this->Request();
-            $active = $request->getParam('active', false) === "1" ;
-            $delivery = $request->getParam('delivery', DropshipManager::MODE_DROPSHIP_ONLY);
+            $deliveryMode = $request->getParam('delivery', DropshipManager::MODE_DROPSHIP_ONLY);
             $productNumber = trim($request->getParam('productNumber', null));
             $detailId = $request->getParam('detailId', null);
 
-            [$result, $settings] = $registry->register($detailId, $productNumber, $active, $delivery);
+            [$result, $settings] = $registry->register($detailId, $productNumber, $deliveryMode);
 
             switch ($result) {
                 case ArticleRegistry::NO_ERROR:

@@ -70,7 +70,14 @@ class ApiClient implements AugmentedObject
     {
         $cmd = $this->authUrl . '&command=dropship&xml=' . urlencode($xmlRequest);
         $data = $this->httpReader->readXml($cmd);
-        return $data['DROPSHIPPING']['DROPSHIP'];
+        $data = $data['DROPSHIPPING']['DROPSHIP'];
+        return [
+            'orderNumber'       => $data['ORDERS_NUMBER'],
+            'message'           => $data['MESSAGE'],
+            'status'            => $data['STATUS'],
+            'dropshipId'        => $data['DROPSHIP_ID'],
+            'dropshipOrderId'   => $data['ORDERS_ID'],
+        ];
     }
 
     public function getTrackingData($date = null)

@@ -87,7 +87,7 @@ class ArticleRegistry implements AugmentedObject
     }
 
 
-    public function register(int $detailId, string $productNumber, bool $active, int $delivery)
+    public function register(int $detailId, string $productNumber, int $deliveryMode)
     {
         if (empty($productNumber)) return [self::ERROR_INVALID_ARGUMENT, $this->fields];
 
@@ -113,7 +113,7 @@ class ArticleRegistry implements AugmentedObject
             'mxcbc_dsi_supplier'          => $this->supplier,
             'mxcbc_dsi_ic_registered'     => true,
             // should be moved to MxcDropship context, because it is not Innocigs specific
-            'mxcbc_dsi_mode'              => $delivery,
+            'mxcbc_dsi_mode'              => $deliveryMode,
         ];
 
         $this->updateSettings($detailId, $data);
