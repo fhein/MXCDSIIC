@@ -4,6 +4,7 @@ namespace MxcDropshipInnocigs\Exception;
 
 use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\MxcDropshipInnocigs;
+use Throwable;
 
 // This class is not really an exception. It maps to DropshipException.
 
@@ -26,19 +27,9 @@ class ApiException
         return DropshipException::fromSupplierErrors($supplier, $errors);
     }
 
-    public static function fromInvalidXML() {
+    public static function fromXmlError(int $error) {
         $supplier = MxcDropshipInnocigs::getModule()->getName();
-        return DropshipException::fromInvalidXml($supplier);
-    }
-
-    public static function fromJsonEncode() {
-        $supplier = MxcDropshipInnocigs::getModule()->getName();
-        return DropshipException::fromJsonEncode($supplier);
-    }
-
-    public static function fromJsonDecode() {
-        $supplier = MxcDropshipInnocigs::getModule()->getName();
-        return DropshipException::fromJsonDecode($supplier);
+        return DropshipException::fromXmlError($supplier, $error);
     }
 
     public static function fromSupplierErrors(array $errors) {
@@ -63,11 +54,10 @@ class ApiException
         return DropshipException::fromInvalidRecipientAddress($supplier, $errors);
     }
 
-    public static function fromDropshipNOK(array $errors, array $data)
+    public static function fromClientException(Throwable $e)
     {
         $supplier = MxcDropshipInnocigs::getModule()->getName();
-        return DropshipException::fromDropshipNOK($supplier, $errors, $data);
+        return DropshipException::fromClientException($supplier, $e);
     }
-
 }
 

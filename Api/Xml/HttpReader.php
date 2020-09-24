@@ -8,6 +8,7 @@ use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\Exception\ApiException;
 use DOMDocument;
 use DOMElement;
+use Throwable;
 
 class HttpReader
 {
@@ -37,7 +38,7 @@ class HttpReader
         $dom = new DOMDocument();
         $result = $dom->loadXML($xml);
         if ($result === false) {
-            throw ApiException::fromInvalidXML();
+            throw ApiException::fromXmlError(DropshipException::XML_INVALID);
         }
         $models = $dom->getElementsByTagName('PRODUCT');
 
@@ -70,8 +71,14 @@ class HttpReader
     {
         $client = $this->getClient();
         $client->setUri($cmd);
-        $response = $client->send(); // may throw
-        if (! $response->isSuccess()) throw ApiException::fromHttpStatus($response->getStatusCode());
+        try {
+            $response = $client->send(); // may throw
+            if (! $response->isSuccess()) {
+                throw ApiException::fromHttpStatus($response->getStatusCode());
+            }
+        } catch (Throwable $e) {
+            throw ApiException::fromClientException($e);
+        }
         return $response;
     }
 

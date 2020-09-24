@@ -7,6 +7,7 @@ use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropshipInnocigs\Api\Xml\HttpReader;
 use MxcDropshipInnocigs\Api\Xml\XmlReader;
+use MxcDropshipInnocigs\Exception\ApiException;
 
 class ApiClient implements AugmentedObject
 {
@@ -68,9 +69,20 @@ class ApiClient implements AugmentedObject
     // note: we currently support one dropship order per request (the InnoCigs API supports a list of dropship)
     public function sendOrder($xmlRequest)
     {
+        return [
+            'orderNumber'       => '20015',
+            'message'           => 'Dropship erfolgreich übertragen',
+            'status'            => 'OK',
+            'dropshipId'        => '12345',
+            'dropshipOrderId'   => '6789',
+        ];
         $cmd = $this->authUrl . '&command=dropship&xml=' . urlencode($xmlRequest);
         $data = $this->httpReader->readXml($cmd);
         $data = $data['DROPSHIPPING']['DROPSHIP'];
+        $errors = $data['ERRORS'] ?? [];
+        if (! empty($errors)) {
+            throw ApiException::fromSupplierErrors($errors);
+        }
         return [
             'orderNumber'       => $data['ORDERS_NUMBER'],
             'message'           => $data['MESSAGE'],

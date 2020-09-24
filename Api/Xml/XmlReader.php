@@ -2,6 +2,7 @@
 
 namespace MxcDropshipInnocigs\Api\Xml;
 
+use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\Exception\ApiException;
 use XMLReader as PhpXmlReader;
 use DOMElement;
@@ -52,7 +53,7 @@ class XmlReader
         while ($reader->name === 'PRODUCT') {
             $model = $reader->expand();
             if (! $model instanceof DOMElement) {
-                throw ApiException::fromInvalidXML();
+                throw ApiException::fromXmlError(DropshipException::XML_INVALID);
             }
             $item = $this->rta->modelToArray($model);
 

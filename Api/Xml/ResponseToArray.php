@@ -7,6 +7,7 @@ use DOMElement;
 
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
+use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\Exception\ApiException;
 use MxcDropship\Models\DropshipModule;
 use MxcDropshipInnocigs\MxcDropshipInnocigs;
@@ -74,12 +75,14 @@ class ResponseToArray implements AugmentedObject
             $dump = Shopware()->DocPath() . 'var/log/invalid-innocigs-api-response-' . date('Y-m-d-H-i-s') . '.txt';
             file_put_contents($dump, $xml);
             $this->log->err('Invalid InnoCigs API response dumped to ' . $dump);
-            throw ApiException::fromInvalidXML();
+            throw ApiException::fromXmlError(DropshipException::XML_INVALID);
         }
         $json = json_encode($xml);
-        if ($json === false) throw ApiException::fromJsonEncode();
+        if ($json === false) {
+            throw ApiException::fromXmlError(DropshipException::XML_JSON_ENCODE_FAILED);
+        }
         $result = json_decode($json, true);
-        if ($result === false) throw ApiException::fromJsonDecode();
+        if ($result === false) throw ApiException::fromXmlError(DropshipException::XML_JSON_DECODE_FAILED);
         $errors = $result['ERRORS'] ?? null;
         if ($errors) throw ApiException::fromSupplierErrors($errors);
         return $result;
