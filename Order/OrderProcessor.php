@@ -101,7 +101,7 @@ class OrderProcessor implements AugmentedObject
             case DropshipException::MODULE_API_XML_ERROR:
                 $context['errors'] = $e->getXmlErrors();
                 break;
-            case DropshipException::MODULE_API_FAILURE:
+            case DropshipException::MODULE_API_ERROR:
                 $context['errors'] = $e->getApiErrors();
                 break;
             default:
