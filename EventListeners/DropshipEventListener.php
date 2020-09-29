@@ -22,7 +22,6 @@ class DropshipEventListener implements AugmentedObject
     public function attach(SharedEventManagerInterface $sharedEvents) {
         $sharedEvents->attach(DropshipManager::class, 'updatePrices', [$this, 'onUpdatePrices']);
         $sharedEvents->attach(DropshipManager::class, 'updateStock', [$this, 'onUpdateStock']);
-        $sharedEvents->attach(DropshipManager::class, 'getStockInfo', [$this, 'onGetStockInfo']);
         $sharedEvents->attach(DropshipManager::class, 'sendOrder', [$this, 'onSendOrder']);
     }
 
@@ -48,23 +47,11 @@ class DropshipEventListener implements AugmentedObject
         ];
     }
 
-    public function onGetStockInfo(EventInterface $e)
-    {
-        $params = $e->getParams();
-        /** @var StockInfo $stockInfo */
-        $stockInfo = $this->services->get(StockInfo::class);
-        $stockInfo = $stockInfo->getStock($params['attr']);
-        if ($params['stopIfAvailable'] == true && $stockInfo['instock'] > 0) {
-            $e->stopPropagation(true);
-        }
-        return $stockInfo;
-    }
-
     public function onSendOrder(EventInterface $e)
     {
         $order = $e->getParam('order');
         /** @var OrderProcessor $processor */
         $processor = $this->services->get(OrderProcessor::class);
-        $processor->sendOrder($order);
+        return $processor->sendOrder($order);
     }
 }

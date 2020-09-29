@@ -78,15 +78,5 @@ return [
             'severity'          => DropshipLogger::NOTICE,
             'status'            => DropshipManager::ORDER_STATUS_SENT,
         ],
-        'OWN_STOCK_ORDER' => [
-            'mailTemplate'      => 'sMxcDsiDropshipStatus',
-            'mailSubject'       => 'Dropship-Status - Bestellung {$orderNumber} erfolgreich übertragen',
-            'mailTitle'         => 'Bestellung erfolgreich übertragen',
-            'mailBody'          => 'die Bestellung mit der Nummer <strong>{$orderNumber}</strong> wurde erfolgreich '
-                                    . 'an InnoCigs übertragen. Warte auf Tracking-Daten. ',
-            'message'           => 'Dropship-Auftrag erfolgreich an den Großhändler übertragen. Warte auf Trackingdaten.',
-            'severity'          => DropshipLogger::NOTICE,
-            'status'            => DropshipManager::ORDER_STATUS_SENT,
-        ]
     ],
 ];

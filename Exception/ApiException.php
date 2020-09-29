@@ -17,11 +17,9 @@ class ApiException
     public static function fromEmptyProductInfo() {
         $supplier = MxcDropshipInnocigs::getModule()->getName();
         $errors = [
-            'errors' => [
-                'error' => [
-                    'CODE'    => ApiException::PRODUCT_UNKNOWN_1,
-                    'MESSAGE' => 'Unbekanntes Produkt,'
-                ]
+            'ERROR' => [
+                'CODE'    => ApiException::PRODUCT_UNKNOWN_1,
+                'MESSAGE' => 'Unbekanntes Produkt,'
             ]
         ];
         return DropshipException::fromSupplierErrors($supplier, $errors);

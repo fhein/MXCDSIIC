@@ -2,7 +2,7 @@
 
 namespace MxcDropshipInnocigs\Order;
 
-use MxcCommons\Log\LoggerAwareTrait;
+use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\Plugin\Service\ClassConfigAwareTrait;
 use MxcCommons\Plugin\Service\DatabaseAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
@@ -45,33 +45,26 @@ class OrderProcessor implements AugmentedObject
     // $order is a join of s_order and s_order_attributes, order id is $order['orderID']
     public function sendOrder(array $order)
     {
-        $orderId = $order['orderID'];
-        // get all order details to be ordered from InnoCigs
-        $details = $this->getOrderDetails($orderId);
-        // We return true only if we actually successfully send an order to InnoCigs.
-        // If the order does not contain any InnoCigs products, we have nothing to do.
-        if (empty($details)) return false;
-
-        $this->shippingAddress = $this->getShippingAddress($orderId);
         try {
+            $orderId = $order['orderID'];
+            // get all order details to be ordered from InnoCigs
+            $details = $this->getOrderDetails($orderId);
+            // We return true only if we actually successfully send an order to InnoCigs.
+            // If the order does not contain any InnoCigs products, we have nothing to do.
+            if (empty($details)) return false;
+
+            $this->shippingAddress = $this->getShippingAddress($orderId);
             $this->validateShippingAddress($this->shippingAddress);
+
             $this->dropshipOrder->create($order['ordernumber'], $this->shippingAddress);
             $this->addOrderDetails($order['ordernumber'], $details);
             $result = $this->dropshipOrder->send();
             $context = $this->classConfig['error_context']['ORDER_SUCCESS'];
             $this->dropshipLog($order, $context);
             $this->sendMail($order, $context);
-
-            // if we get here, order was sent successfully
-            $this->setOrderStatus(
-                $order['orderID'],
-                DropshipManager::ORDER_STATUS_SENT,
-                $result['message'],
-                $result['dropshipId'],
-                $result['dropshipOrderId']
-            );
+            $this->setOrderStatusSuccess($orderId, $result, $details);
         } catch (DropshipException $e) {
-            $this->handleOrderException($e, $order);
+            $this->handleOrderException($e, $order, $details);
             return false;
         }
         // catch all exceptions which we might not have covered yet
@@ -82,7 +75,7 @@ class OrderProcessor implements AugmentedObject
         return true;
     }
 
-    public function handleOrderException(DropshipException $e, array $order)
+    public function handleOrderException(DropshipException $e, array $order, array $details)
     {
         $code = $e->getCode();
         $context = $this->classConfig['error_context'][$code];
@@ -108,17 +101,23 @@ class OrderProcessor implements AugmentedObject
                 $context = $this->classConfig['error_context']['UNKNOWN_ERROR'];
                 $context['errors'] = [['code' => $e->getCode(), 'message' => $e->getMessage()]];
         }
+        $context['errorStatus'] = $code;
         $this->dropshipLog($order, $context);
         $this->sendMail($order, $context);
         $this->setOrderStatus($order['orderID'], $context['status'], $context['message']);
+        foreach ($details as $detail) {
+            $this->setOrderDetailStatusError($detail['detailID'], $context);
+        }
     }
 
     public function handleUnknownException(Throwable $e, array $order)
     {
         $context = $this->classConfig['error_context']['UNKNOWN_ERROR'];
-        $context['errors'] = [['code' => $e->getCode(), 'message' => $e->getMessage()]];
+        $message = $e->getMessage();
+        $context['errors'] = [['code' => $e->getCode(), 'message' => $message]];
         $this->dropshipLog($order, $context);
         $this->sendMail($order, $context);
+        $this->setOrderStatus($order['orderID'], DropshipManager::ORDER_STATUS_UNKNOWN_ERROR, $message);
     }
 
     // collect all address validation errors and throw if any
@@ -168,6 +167,7 @@ class OrderProcessor implements AugmentedObject
             throw ApiException::fromInvalidRecipientAddress($errors);
         }
     }
+
     protected function addOrderDetails(string $orderNumber, array $details)
     {
         $errors = [];
@@ -186,7 +186,6 @@ class OrderProcessor implements AugmentedObject
                 'orderNumber'       => $orderNumber,
                 'productNumber'     => $productNumber,
                 'quantity'          => $quantity,
-                'severity'          => DropshipLogger::ERR,
                 'instock'           => null,
             ];
 
@@ -199,22 +198,21 @@ class OrderProcessor implements AugmentedObject
                 if ($instock == 0) {
 //                if ($instock == 0 || $pos == 0) {
                     $error['code'] = DropshipException::PRODUCT_OUT_OF_STOCK;
-                    $error['message'] = sprintf('Produkt %s nicht auf Lager.', $productNumber);
+                    $error['message'] = 'Nicht auf Lager.';
+                    $error['severity'] = DropshipLogger::ERR;
                     $valid = false;
                     $errors[] = $error;
                 } elseif ($instock < $quantity) {
 //                } elseif ($instock < $quantity || $pos == 1) {
                     $error['code'] = DropshipException::POSITION_EXCEEDS_STOCK;
-                    $error['message'] = sprintf('Lagerbestand für Produkt %s (%u) kleiner als %u.',
-                        $productNumber,
-                        $instock,
-                        $quantity
-                    );
+                    $error['message'] = 'Lagerbestand zu gering.';
+                    $error['severity'] = DropshipLogger::ERR;
                     $valid = false;
                     $errors[] = $error;
                 } else {
-                    $error['message'] = sprintf('Produkt %s: OK', $productNumber);
+                    $error['message'] = 'Position ok.';
                     $error['code'] = DropshipManager::NO_ERROR;
+                    $error['severity'] = DropshipLogger::NOTICE;
                     $errors[] = $error;
                     $this->dropshipOrder->addPosition($productNumber, $quantity);
                 }
@@ -223,8 +221,8 @@ class OrderProcessor implements AugmentedObject
                 $code = $e->getCode();
                 if ($code === DropshipException::MODULE_API_SUPPLIER_ERRORS) {
                     $error = array_merge($error, $e->getSupplierErrors()[0]);
+                    $errors[] = $error;
                     $valid = false;
-                    $errors[$detail] = $error;
                 } else {
                     // if we do not have supplier errors we have a general API error
                     // so a more general error handling is required
@@ -234,13 +232,12 @@ class OrderProcessor implements AugmentedObject
             $pos++;
         }
         foreach ($errors as $status) {
-            $this->setOrderDetailStatus($status);
+            $this->setOrderDetailPositionStatus($status);
         }
         if (! $valid) {
             throw ApiException::fromInvalidOrderPositions($errors);
         }
     }
-
     public function sendMail($order, $context)
     {
         $orderNumber = $order['ordernumber'];
@@ -308,50 +305,98 @@ class OrderProcessor implements AugmentedObject
         ', ['articleDetailId' => $articleDetailId]);
     }
 
-    private function setOrderDetailStatus(array $status)
+    private function setOrderDetailPositionStatus(array $status)
     {
         $this->db->executeUpdate('
             UPDATE s_order_details_attributes oda
             SET
-                oda.mxcbc_dsi_message = :message,
-                oda.mxcbc_dsi_status  = :code,
-                oda.mxcbc_dsi_instock = :instock
+                oda.mxcbc_dsi_message       = :message,
+                oda.mxcbc_dsi_status        = :code,
+                oda.mxcbc_dsi_instock       = :instock
             WHERE 
                 oda.detailID = :detailId
         ', [
-            'detailId' => $status['detailId'],
-            'code' => $status['code'],
-            'message' => $status['message'],
-            'instock' => $status['instock']
+            'detailId'  => $status['detailId'],
+            'code'      => $status['code'],
+            'message'   => $status['message'],
+            'instock'   => $status['instock'],
         ]);
+    }
+
+    private function setOrderDetailStatusSuccess(int $detailId, array $result)
+    {
+        $this->db->executeUpdate('
+                UPDATE 
+                    s_order_details_attributes oda
+                SET
+                    oda.mxcbc_dsi_dropship_id   = :dropshipId,
+                    oda.mxcbc_dsi_order_id      = :dropshipOrderId,
+                    oda.mxcbc_dsi_date          = :date,
+                    oda.mxcbc_dsi_status        = 0,
+                    oda.mxcbc_dsi_message       = :message
+                WHERE                
+                    oda.detailID = :detailId
+                ', [
+                'dropshipId'        => $result['dropshipId'],
+                'dropshipOrderId'   => $result['dropshipOrderId'],
+                'date'              => date('d.m.Y H:i:s'),
+                'message'           => $result['message'],
+                'detailId'          => $detailId,
+            ]
+        );
+    }
+
+    private function setOrderDetailStatusError(int $detailId, array $context)
+    {
+        $this->db->executeUpdate('
+                UPDATE 
+                    s_order_details_attributes oda
+                SET
+                    oda.mxcbc_dsi_status        = :status,
+                    oda.mxcbc_dsi_message       = :message,
+                    oda.mxcbc_dsi_date          = NULL,
+                    oda.mxcbc_dsi_dropship_id   = NULL,
+                    oda.mxcbc_dsi_order_id      = NULL
+                WHERE                
+                    oda.detailID = :detailId
+                ', [
+                    'status'    => $context['errorStatus'],
+                    'message'   => $context['message'],
+                    'detailId'  => $detailId,
+            ]
+        );
     }
 
     protected function setOrderStatus(
         int $orderId,
         int $status,
-        string $message,
-        string $dropshipId = null,
-        string $supplierOrderId = null
+        string $message
     ) {
         $this->db->executeUpdate('
             UPDATE 
                 s_order_attributes oa
             SET
                 oa.mxcbc_dsi_status         = :status,
-                oa.mxcbc_dsi_message        = :message,
-                oa.mxcbc_dsi_order_id       = :orderId,
-                oa.mxcbc_dsi_dropship_id    = :dropshipId,
-                oa.mxcbc_dsi_date           = :date
+                oa.mxcbc_dsi_message        = :message
             WHERE                
                 oa.orderID = :id
             ', [
                 'status'     => $status,
                 'message'    => $message,
-                'orderId'    => $supplierOrderId,
-                'dropshipId' => $dropshipId,
-                'date'       => date('d.m.Y H:i:s'),
                 'id'         => $orderId,
             ]
+        );
+    }
+
+    protected function setOrderStatusSuccess(int $orderId, array $result, array $details)
+    {
+        foreach ($details as $detail) {
+            $this->setOrderDetailStatusSuccess($detail['detailID'], $result);
+        }
+        $this->setOrderStatus(
+            $orderId,
+            DropshipManager::ORDER_STATUS_SENT,
+            $result['message']
         );
     }
 }

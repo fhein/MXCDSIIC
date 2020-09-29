@@ -12,7 +12,6 @@ use MxcDropshipInnocigs\Api\Credentials;
 use MxcDropshipInnocigs\Order\DropshipOrder;
 use MxcDropshipInnocigs\Companion\DropshippersCompanion;
 use MxcDropshipInnocigs\Order\OrderProcessor;
-use MxcDropshipInnocigs\Stock\StockInfo;
 use MxcDropshipInnocigs\Api\Xml\HttpReader;
 use MxcDropshipInnocigs\Api\Xml\ResponseToArray;
 use MxcDropshipInnocigs\Api\Xml\XmlReader;
@@ -44,7 +43,6 @@ return [
             ApiClient::class,
             Credentials::class,
             DropshippersCompanion::class,
-            StockInfo::class,
             OrderProcessor::class,
             HttpReader::class,
             XmlReader::class,
@@ -57,7 +55,6 @@ return [
             'DropshipEventListener'     => DropshipEventListener::class,
             'ArticleRegistry'           => ArticleRegistry::class,
             'ApiClient'                 => ApiClient::class,
-            'StockInfo'                 => StockInfo::class,
             'OrderProcessor'            => OrderProcessor::class,
             'DropshippersCompanion'     => DropshippersCompanion::class,
         ]
