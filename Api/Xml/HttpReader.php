@@ -61,6 +61,10 @@ class HttpReader
         return $import;
     }
 
+    public function readXml2(string $xml) {
+        return $this->rta->xmlToArray($xml);
+    }
+
     public function readXml(string $cmd): array
     {
         $xml = $this->send($cmd)->getBody();

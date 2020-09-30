@@ -11,7 +11,7 @@ use MxcDropshipInnocigs\Jobs\UpdatePrices;
 use MxcDropshipInnocigs\Jobs\UpdateStock;
 use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use MxcDropshipInnocigs\Order\OrderProcessor;
-use MxcDropshipInnocigs\Stock\StockInfo;
+use MxcDropshipInnocigs\Order\TrackingDataProcessor;
 use Shopware\Models\Order\Order;
 use Throwable;
 
@@ -23,6 +23,7 @@ class DropshipEventListener implements AugmentedObject
         $sharedEvents->attach(DropshipManager::class, 'updatePrices', [$this, 'onUpdatePrices']);
         $sharedEvents->attach(DropshipManager::class, 'updateStock', [$this, 'onUpdateStock']);
         $sharedEvents->attach(DropshipManager::class, 'sendOrder', [$this, 'onSendOrder']);
+        $sharedEvents->attach(DropshipManager::class, 'updateTrackingData', [$this, 'onUpdateTrackingData']);
     }
 
     public function onUpdatePrices(EventInterface $e)
@@ -53,5 +54,13 @@ class DropshipEventListener implements AugmentedObject
         /** @var OrderProcessor $processor */
         $processor = $this->services->get(OrderProcessor::class);
         return $processor->sendOrder($order);
+    }
+
+    public function onUpdateTrackingData(EventInterface $e)
+    {
+        $order = $e->getParam('order');
+        /** @var TrackingDataProcessor $processor */
+        $processor = $this->services->get(TrackingDataProcessor::class);
+        return $processor->updateTrackingData($order);
     }
 }

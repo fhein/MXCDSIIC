@@ -94,12 +94,85 @@ class ApiClient implements AugmentedObject
 
     public function getTrackingData($date = null)
     {
+        $xml = '
+            <INNOCIGS_API_RESPONSE>
+                <TRACKING>
+                    <DROPSHIP>
+                        <DROPSHIP_ID>112</DROPSHIP_ID>
+                        <ORDERS_NUMBER>20116</ORDERS_NUMBER>
+                        <TRACKINGS>
+                            <TRACKINGINFO>
+                                <CARRIER>DHL</CARRIER>
+                                <CODE>TR000001</CODE>
+                                <RECEIVER>
+                                    <COMPANY>Musterfirma</COMPANY>
+                                    <COMPANY2 />
+                                    <FIRSTNAME>Hans</FIRSTNAME>
+                                    <LASTNAME>Muster</LASTNAME>
+                                    <STREET_ADDRESS>Musterweg 99</STREET_ADDRESS>
+                                    <POSTCODE>22761</POSTCODE>
+                                    <CITY>Hamburg</CITY>
+                                    <COUNTRY_CODE>DE</COUNTRY_CODE>
+                                </RECEIVER>
+                            </TRACKINGINFO>
+                            <TRACKINGINFO>
+                                <CARRIER>DHL</CARRIER>
+                                <CODE>TR000002</CODE>
+                                <RECEIVER>
+                                    <COMPANY>Musterfirma</COMPANY>
+                                    <COMPANY2 />
+                                    <FIRSTNAME>Hans</FIRSTNAME>
+                                    <LASTNAME>Muster</LASTNAME>
+                                    <STREET_ADDRESS>Musterweg 99</STREET_ADDRESS>
+                                    <POSTCODE>22761</POSTCODE>
+                                    <CITY>Hamburg</CITY>
+                                    <COUNTRY_CODE>DE</COUNTRY_CODE>
+                                </RECEIVER>
+                            </TRACKINGINFO>
+
+                        </TRACKINGS>
+                    </DROPSHIP>
+                    <DROPSHIP>
+                        <DROPSHIP_ID>113</DROPSHIP_ID>
+                        <ORDERS_NUMBER>001235</ORDERS_NUMBER>
+                        <TRACKINGS>
+                            <TRACKINGINFO>
+                            <CARRIER>DHL</CARRIER>
+                            <CODE>TR000002</CODE>
+                            <RECEIVER>
+                                <COMPANY />
+                                <COMPANY2 />
+                                <FIRSTNAME>Karl</FIRSTNAME>
+                                <LASTNAME>Muster</LASTNAME>
+                                <STREET_ADDRESS>Musterstr. 12</STREET_ADDRESS>
+                                <POSTCODE>24103</POSTCODE>
+                                <CITY>Kiel</CITY>
+                                <COUNTRY_CODE>DE</COUNTRY_CODE>
+                            </RECEIVER>
+                        </TRACKINGINFO>
+                    </TRACKINGS>
+                </DROPSHIP>
+            </TRACKING>
+            <CANCELLATION>
+                <DROPSHIP>
+                    <DROPSHIP_ID>114</DROPSHIP_ID>
+                    <ORDERS_NUMBER>001236</ORDERS_NUMBER>
+                    <MESSAGE>Der Auftrag wurde storniert</MESSAGE>
+                </DROPSHIP>
+                <DROPSHIP>
+                    <DROPSHIP_ID>115</DROPSHIP_ID>
+                    <ORDERS_NUMBER>20115</ORDERS_NUMBER>
+                    <MESSAGE>Der Auftrag wurde storniert</MESSAGE>
+                </DROPSHIP>
+            </CANCELLATION>
+        </INNOCIGS_API_RESPONSE>';
+
         if (! $date instanceof DateTime) {
             $date = (new DateTime())->format('Y-m-d');
         }
 
         $cmd = $this->authUrl . '&command=tracking&day=' . $date;
-        return $this->httpReader->readXml($cmd);
+        return $this->httpReader->readXml2($xml);
     }
 
     protected function getPriceData(array $data)

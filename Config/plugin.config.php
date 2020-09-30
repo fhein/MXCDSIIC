@@ -5,6 +5,7 @@ namespace MxcDropshipInnocigs;
 use MxcDropshipInnocigs\EventListeners\DropshipEventListener;
 use MxcDropshipInnocigs\Jobs\UpdatePrices;
 use MxcDropshipInnocigs\Jobs\UpdateStock;
+use MxcDropshipInnocigs\Order\TrackingDataProcessor;
 use MxcDropshipInnocigs\PluginListeners\RegisterDropshipModule;
 use MxcDropshipInnocigs\Api\ApiClient;
 use MxcDropshipInnocigs\Article\ArticleRegistry;
@@ -50,6 +51,7 @@ return [
             UpdateStock::class,
             UpdatePrices::class,
             DropshipEventListener::class,
+            TrackingDataProcessor::class,
         ],
         'aliases' => [
             'DropshipEventListener'     => DropshipEventListener::class,
