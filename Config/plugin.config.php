@@ -25,7 +25,6 @@ return [
     'doctrine' => [
         'attributes' => [
             's_articles_attributes'      => [
-                // ist das Produkt für InnoCigs dropship registriert?
                 'mxcbc_dsi_ic_registered'     => ['type' => TypeMapping::TYPE_BOOLEAN],
                 'mxcbc_dsi_ic_status'         => ['type' => TypeMapping::TYPE_INTEGER],
                 'mxcbc_dsi_ic_productnumber'  => ['type' => TypeMapping::TYPE_STRING],
@@ -34,6 +33,10 @@ return [
                 'mxcbc_dsi_ic_retailprice'    => ['type' => TypeMapping::TYPE_FLOAT],
                 'mxcbc_dsi_ic_instock'        => ['type' => TypeMapping::TYPE_INTEGER],
             ],
+            's_order_attributes' => [
+                'mxcbc_dsi_ic_status'         => ['type' => TypeMapping::TYPE_INTEGER],
+                'mxcbc_dsi_ic_message'        => ['type' => TypeMapping::TYPE_STRING],
+            ]
         ],
     ],
 

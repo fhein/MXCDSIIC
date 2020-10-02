@@ -13,8 +13,7 @@ class OrderProcessorFactory implements FactoryInterface
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
         $dropshipOrder = $container->get(DropshipOrder::class);
-        $dropshipLogger = MxcDropship::getServices()->get(DropshipLogger::class);
         $apiClient = $container->get(ApiClient::class);
-        return new OrderProcessor($dropshipOrder, $dropshipLogger, $apiClient);
+        return new OrderProcessor($dropshipOrder, $apiClient);
     }
 }

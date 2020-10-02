@@ -50,10 +50,10 @@ class DropshipEventListener implements AugmentedObject
 
     public function onSendOrder(EventInterface $e)
     {
-        $order = $e->getParam('order');
         /** @var OrderProcessor $processor */
         $processor = $this->services->get(OrderProcessor::class);
-        return $processor->sendOrder($order);
+        // return the order's new mxcbc_dsi_ic_status
+        return $processor->sendOrder($e->getParam('order'), $e->getTarget());
     }
 
     public function onUpdateTrackingData(EventInterface $e)
@@ -61,6 +61,6 @@ class DropshipEventListener implements AugmentedObject
         $order = $e->getParam('order');
         /** @var TrackingDataProcessor $processor */
         $processor = $this->services->get(TrackingDataProcessor::class);
-        return $processor->updateTrackingData($order);
+        return $processor->updateTrackingData($e->getParam('order'), $e->getTarget());
     }
 }

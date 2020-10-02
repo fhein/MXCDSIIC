@@ -3,8 +3,12 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        <service id="mxcbc_dropship_innocigs.subscriber.backend_order"
+                 class="MxcDropshipInnocigs\Subscribers\BackendOrderSubscriber">
+            <tag name="shopware.event_subscriber"/>
+        </service>
 
-        <service id="mxc_dropship_innocigs.subscriber.templates"
+        <service id="mxcbc_dropship_innocigs.subscriber.templates"
                  class="MxcDropshipInnocigs\Subscribers\TemplateRegistration">
             <argument>%mxc_dropship_innocigs.plugin_dir%</argument>
             <argument type="service" id="template"/>
