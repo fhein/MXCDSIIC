@@ -74,7 +74,7 @@ class ApiClient implements AugmentedObject
             'message'           => 'Dropship erfolgreich übertragen',
             'status'            => 'OK',
             'dropshipId'        => '12345',
-            'dropshipOrderId'   => '6789',
+            'supplierOrderId'   => '6789',
         ];
         $cmd = $this->authUrl . '&command=dropship&xml=' . urlencode($xmlRequest);
         $data = $this->httpReader->readXml($cmd);
@@ -88,7 +88,7 @@ class ApiClient implements AugmentedObject
             'message'           => $data['MESSAGE'],
             'status'            => $data['STATUS'],
             'dropshipId'        => $data['DROPSHIP_ID'],
-            'dropshipOrderId'   => $data['ORDERS_ID'],
+            'supplierOrderId'   => $data['ORDERS_ID'],
         ];
     }
 
@@ -99,7 +99,7 @@ class ApiClient implements AugmentedObject
                 <TRACKING>
                     <DROPSHIP>
                         <DROPSHIP_ID>112</DROPSHIP_ID>
-                        <ORDERS_NUMBER>20116</ORDERS_NUMBER>
+                        <ORDERS_NUMBER>20128</ORDERS_NUMBER>
                         <TRACKINGS>
                             <TRACKINGINFO>
                                 <CARRIER>DHL</CARRIER>
@@ -161,7 +161,7 @@ class ApiClient implements AugmentedObject
                 </DROPSHIP>
                 <DROPSHIP>
                     <DROPSHIP_ID>115</DROPSHIP_ID>
-                    <ORDERS_NUMBER>20115</ORDERS_NUMBER>
+                    <ORDERS_NUMBER>20120</ORDERS_NUMBER>
                     <MESSAGE>Der Auftrag wurde storniert</MESSAGE>
                 </DROPSHIP>
             </CANCELLATION>

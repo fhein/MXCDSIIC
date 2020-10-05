@@ -5,6 +5,7 @@ namespace MxcDropshipInnocigs;
 use MxcDropshipInnocigs\EventListeners\DropshipEventListener;
 use MxcDropshipInnocigs\Jobs\UpdatePrices;
 use MxcDropshipInnocigs\Jobs\UpdateStock;
+use MxcDropshipInnocigs\Order\DropshipStatus;
 use MxcDropshipInnocigs\Order\TrackingDataProcessor;
 use MxcDropshipInnocigs\PluginListeners\RegisterDropshipModule;
 use MxcDropshipInnocigs\Api\ApiClient;
@@ -36,6 +37,11 @@ return [
             's_order_attributes' => [
                 'mxcbc_dsi_ic_status'         => ['type' => TypeMapping::TYPE_INTEGER],
                 'mxcbc_dsi_ic_message'        => ['type' => TypeMapping::TYPE_STRING],
+                'mxcbc_dsi_ic_carriers'       => ['type' => TypeMapping::TYPE_STRING],
+                'mxcbc_dsi_ic_tracking_ids'   => ['type' => TypeMapping::TYPE_STRING],
+                'mxcbc_dsi_ic_date'           => ['type' => TypeMapping::TYPE_STRING],
+                'mxcbc_dsi_ic_dropship_id'    => ['type' => TypeMapping::TYPE_STRING],
+                'mxcbc_dsi_ic_order_id'       => ['type' => TypeMapping::TYPE_STRING],
             ]
         ],
     ],
@@ -48,6 +54,7 @@ return [
             Credentials::class,
             DropshippersCompanion::class,
             OrderProcessor::class,
+            DropshipStatus::class,
             HttpReader::class,
             XmlReader::class,
             ResponseToArray::class,

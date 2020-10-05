@@ -28,24 +28,12 @@ class DropshipEventListener implements AugmentedObject
 
     public function onUpdatePrices(EventInterface $e)
     {
-        // may throw
-        $this->services->get(UpdatePrices::class)->run();
-        return [
-            'code' => DropshipManager::NO_ERROR,
-            'supplier' => MxcDropshipInnocigs::getModule()->getName(),
-            'message' => 'Prices successfully updated.'
-        ];
+        return $this->services->get(UpdatePrices::class)->run();
     }
 
     public function onUpdateStock(EventInterface $e)
     {
-        // may throw
-        $this->services->get(UpdateStock::class)->run();
-        return [
-            'code' => DropshipManager::NO_ERROR,
-            'supplier' => MxcDropshipInnocigs::getModule()->getName(),
-            'message' => 'Stock successfully updated.'
-        ];
+        return $this->services->get(UpdateStock::class)->run();
     }
 
     public function onSendOrder(EventInterface $e)
@@ -58,7 +46,6 @@ class DropshipEventListener implements AugmentedObject
 
     public function onUpdateTrackingData(EventInterface $e)
     {
-        $order = $e->getParam('order');
         /** @var TrackingDataProcessor $processor */
         $processor = $this->services->get(TrackingDataProcessor::class);
         return $processor->updateTrackingData($e->getParam('order'), $e->getTarget());

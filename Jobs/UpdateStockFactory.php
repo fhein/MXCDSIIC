@@ -7,6 +7,7 @@ use MxcCommons\ServiceManager\Factory\FactoryInterface;
 use MxcDropshipInnocigs\Api\ApiClient;
 use MxcDropshipInnocigs\Article\ArticleRegistry;
 use MxcDropshipInnocigs\Companion\DropshippersCompanion;
+use MxcDropshipInnocigs\Order\DropshipStatus;
 
 class UpdateStockFactory implements FactoryInterface
 {
@@ -14,7 +15,7 @@ class UpdateStockFactory implements FactoryInterface
     {
         $companion = $container->get(DropshippersCompanion::class);
         $client = $container->get(ApiClient::class);
-        $registry = $container->get(ArticleRegistry::class);
-        return new UpdateStock($client, $companion);
+        $dropshipStatus = $container->get(DropshipStatus::class);
+        return new UpdateStock($client, $companion, $dropshipStatus);
     }
 }

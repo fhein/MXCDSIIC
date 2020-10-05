@@ -24,92 +24,62 @@ class OrderProcessor implements AugmentedObject
     /** @var ApiClient */
     protected $client;
 
-    /** @var DropshipManager */
-    protected $dropshipManager;
+    /** @var DropshipStatus */
+    protected $dropshipStatus;
 
     /** @var string */
     protected $supplier;
-    protected $shippingAddress;
 
-    public function __construct(DropshipOrder $dropshipOrder, ApiClient $client)
+    /** @var array */
+    protected $details;
+
+    public function __construct(DropshipOrder $dropshipOrder, ApiClient $client, DropshipStatus $dropshipStatus)
     {
         $this->dropshipOrder = $dropshipOrder;
         $this->client = $client;
+        $this->dropshipStatus = $dropshipStatus;
         $this->supplier = MxcDropshipInnocigs::getModule()->getName();
     }
 
-    // $order is a join of s_order and s_order_attributes, order id is $order['orderID']
     public function sendOrder(array $order, $dropshipManager)
     {
-        $this->dropshipManager = $dropshipManager;
+        /** @var DropshipManager $dropshipManager */
+        $shippingAddress = [];
+        $orderId = $order['orderID'];
         try {
-            $orderId = $order['orderID'];
+            // if this order was already sent to InnoCigs (but possibly not to other suppliers)
+            // we do nothing and return the current status
+            if ($order['mxcbc_dsi_ic_status'] != DropshipManager::ORDER_STATUS_OPEN) {
+                return [
+                    'status' => $order['mxcbc_dsi_ic_status'],
+                    'message' => $order['mxcbc_dsi_ic_message']
+                ];
+            }
             // get all order details to be ordered from InnoCigs
-            $details = $this->dropshipManager->getSupplierOrderDetails($this->supplier, $orderId);
+            $details = $dropshipManager->getSupplierOrderDetails($this->supplier, $orderId);
             // We return true only if we actually successfully send an order to InnoCigs.
             // If the order does not contain any InnoCigs products, we have nothing to do.
             if (empty($details)) return null;
+            $this->details = $details;
 
-            $this->shippingAddress = $this->getShippingAddress($orderId);
-            $this->validateShippingAddress($this->shippingAddress);
+            $shippingAddress = $this->getShippingAddress($orderId);
+            $this->validateShippingAddress($shippingAddress);
 
-            $this->dropshipOrder->create($order['ordernumber'], $this->shippingAddress);
-            $this->addOrderDetails($order['ordernumber'], $details);
+            $this->dropshipOrder->create($order['ordernumber'], $shippingAddress);
+            $this->addOrderDetails($order['ordernumber']);
             $result = $this->dropshipOrder->send();
-            $context = $this->dropshipManager->getNotificationContext($this->supplier, $order, 'ORDER_SUCCESS');
-            $this->dropshipManager->notifyStatus($order, $context);
-            return $this->setOrderStatusSuccess($orderId, $result, $details);
-        } catch (DropshipException $e) {
-            return $this->handleOrderException($e, $order, $details ?? []);
+            return $this->dropshipStatus->orderSuccessfullySent($order, $result);
+        } catch (Throwable $e) {
+            [$status, $message] = $dropshipManager->handleDropshipException(
+                $this->supplier,
+                'sendOrder',
+                $e,
+                true,
+                $order,
+                $shippingAddress
+            );
+            return $this->dropshipStatus->setOrderStatus($orderId, $status, $message);
         }
-        // catch all exceptions which we might not have covered yet
-        catch (Throwable $e) {
-            return $this->handleUnknownException($e, $order);
-        }
-    }
-
-    public function handleOrderException(DropshipException $e, array $order, array $details)
-    {
-        $code = $e->getCode();
-        $context = $this->dropshipManager->getNotificationContext($this->supplier, $order, $code);
-        switch ($code) {
-            case DropshipException::MODULE_API_SUPPLIER_ERRORS:
-                $context['errors'] = $e->getSupplierErrors();
-                break;
-            case DropshipException::ORDER_POSITIONS_ERROR:
-                $context['errors'] = $e->getPositionErrors();
-                break;
-            case DropshipException::ORDER_RECIPIENT_ADDRESS_ERROR:
-                $context['errors'] = $e->getAddressErrors();
-                $context['shippingaddress'] = $this->shippingAddress;
-                break;
-            case DropshipException::MODULE_API_XML_ERROR:
-                $context['errors'] = $e->getXmlErrors();
-                break;
-            case DropshipException::MODULE_API_ERROR:
-                $context['errors'] = $e->getApiErrors();
-                break;
-            default:
-                $context = $this->dropshipManager->getNotificationContext($this->supplier, $order, 'UNKNOWN_ERROR');
-                $context['errors'] = [['code' => $e->getCode(), 'message' => $e->getMessage()]];
-        }
-        $context['errorStatus'] = $code;
-        $this->dropshipManager->notifyStatus($order, $context);
-        $status = $this->setOrderStatus($order['orderID'], $context['status'], $context['message']);
-        foreach ($details as $detail) {
-            $this->setOrderDetailStatusError($detail['detailID'], $context);
-        }
-        return $status;
-    }
-
-    public function handleUnknownException(Throwable $e, array $order)
-    {
-        $context = $this->dropshipManager->getNotificationContext($this->supplier, $order, 'UNKNOWN_ERROR');
-        $message = $e->getMessage();
-        $context['errors'] = [['code' => $e->getCode(), 'message' => $message]];
-        $this->dropshipManager->notifyStatus($order, $context);
-        $status = DropshipManager::ORDER_STATUS_UNKNOWN_ERROR;
-        return $this->setOrderStatus($order['orderID'], $status, $message);
     }
 
     // collect all address validation errors and throw if any
@@ -160,25 +130,27 @@ class OrderProcessor implements AugmentedObject
         }
     }
 
-    protected function addOrderDetails(string $orderNumber, array $details)
+    protected function addOrderDetails(string $orderNumber)
     {
         $errors = [];
 
         // collect the errors for all details and throw if any
         $pos = 0;
         $valid = true;
-        foreach ($details as $detail) {
-            $productNumber = $this->getProductNumber($detail['articleDetailID']);
+        foreach ($this->details as $detail) {
+            $productInfo = $this->getProductInfo($detail['articleDetailID']);
+            $productNumber = $productInfo['productNumber'];
             $quantity = $detail['quantity'];
             $detailId = $detail['detailID'];
 
             // error preset
             $error = [
-                'detailId'          => $detailId,
-                'orderNumber'       => $orderNumber,
-                'productNumber'     => $productNumber,
-                'quantity'          => $quantity,
-                'instock'           => null,
+                'detailId'      => $detailId,
+                'orderNumber'   => $orderNumber,
+                'productNumber' => $productNumber,
+                'purchasePrice' => $productInfo['purchasePrice'],
+                'quantity'      => $quantity,
+                'instock'       => null,
             ];
 
             // check if detail is a known product and in stock
@@ -241,21 +213,17 @@ class OrderProcessor implements AugmentedObject
         );
     }
 
-    private function getOrderDetails(int $orderId)
+    private function getProductInfo(int $articleDetailId)
     {
         return $this->db->fetchAll('
-            SELECT * FROM s_order_details od
-            LEFT JOIN s_order_details_attributes oda ON oda.detailID = od.id
-            WHERE od.orderID = :orderId AND oda.mxcbc_dsi_supplier = :supplier
-        ', ['orderId' => $orderId, 'supplier' => $this->supplier]);
-    }
-
-    private function getProductNumber(int $articleDetailId)
-    {
-        return $this->db->fetchOne('
-            SELECT aa.mxcbc_dsi_ic_productnumber FROM s_articles_attributes aa
-            WHERE aa.articledetailsID = :articleDetailId
-        ', ['articleDetailId' => $articleDetailId]);
+            SELECT 
+                aa.mxcbc_dsi_ic_productnumber as productNumber,
+                aa.mxcbc_dsi_ic_purchaseprice as purchasePrice 
+            FROM 
+                s_articles_attributes aa
+            WHERE 
+                aa.articledetailsID = :articleDetailId
+        ', ['articleDetailId' => $articleDetailId])[0];
     }
 
     private function setOrderDetailPositionStatus(array $status)
@@ -265,97 +233,16 @@ class OrderProcessor implements AugmentedObject
             SET
                 oda.mxcbc_dsi_message       = :message,
                 oda.mxcbc_dsi_status        = :code,
-                oda.mxcbc_dsi_instock       = :instock
+                oda.mxcbc_dsi_instock       = :instock,
+                oda.mxcbc_dsi_purchaseprice = :purchasePrice
             WHERE 
                 oda.detailID = :detailId
         ', [
-            'detailId'  => $status['detailId'],
-            'code'      => $status['code'],
-            'message'   => $status['message'],
-            'instock'   => $status['instock'],
+            'detailId'      => $status['detailId'],
+            'code'          => $status['code'],
+            'message'       => $status['message'],
+            'purchasePrice' => $status['purchasePrice'],
+            'instock'       => $status['instock'],
         ]);
-    }
-
-    private function setOrderDetailStatusSuccess(int $detailId, array $result)
-    {
-        $this->db->executeUpdate('
-                UPDATE 
-                    s_order_details_attributes oda
-                SET
-                    oda.mxcbc_dsi_dropship_id   = :dropshipId,
-                    oda.mxcbc_dsi_order_id      = :dropshipOrderId,
-                    oda.mxcbc_dsi_date          = :date,
-                    oda.mxcbc_dsi_status        = 0,
-                    oda.mxcbc_dsi_message       = :message
-                WHERE                
-                    oda.detailID = :detailId
-                ', [
-                'dropshipId'        => $result['dropshipId'],
-                'dropshipOrderId'   => $result['dropshipOrderId'],
-                'date'              => date('d.m.Y H:i:s'),
-                'message'           => $result['message'],
-                'detailId'          => $detailId,
-            ]
-        );
-    }
-
-    private function setOrderDetailStatusError(int $detailId, array $context)
-    {
-        $this->db->executeUpdate('
-                UPDATE 
-                    s_order_details_attributes oda
-                SET
-                    oda.mxcbc_dsi_status        = :status,
-                    oda.mxcbc_dsi_message       = :message,
-                    oda.mxcbc_dsi_date          = NULL,
-                    oda.mxcbc_dsi_dropship_id   = NULL,
-                    oda.mxcbc_dsi_order_id      = NULL
-                WHERE                
-                    oda.detailID = :detailId
-                ', [
-                    'status'    => $context['errorStatus'],
-                    'message'   => $context['message'],
-                    'detailId'  => $detailId,
-            ]
-        );
-    }
-
-    protected function setOrderStatus(
-        int $orderId,
-        int $status,
-        string $message
-    ) {
-
-        $this->db->executeUpdate('
-            UPDATE 
-                s_order_attributes oa
-            SET
-                oa.mxcbc_dsi_status         = :status,
-                oa.mxcbc_dsi_ic_status      = :status,
-                oa.mxcbc_dsi_ic_message     = :message
-            WHERE                
-                oa.orderID = :id
-            ', [
-                'status'     => $status,
-                'message'    => $message,
-                'id'         => $orderId,
-            ]
-        );
-        return [
-            'status' => $status,
-            'message' => $message,
-        ];
-    }
-
-    protected function setOrderStatusSuccess(int $orderId, array $result, array $details)
-    {
-        foreach ($details as $detail) {
-            $this->setOrderDetailStatusSuccess($detail['detailID'], $result);
-        }
-        return $this->setOrderStatus(
-            $orderId,
-            DropshipManager::ORDER_STATUS_SENT,
-            $result['message']
-        );
     }
 }

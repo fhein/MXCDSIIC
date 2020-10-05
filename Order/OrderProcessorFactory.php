@@ -14,6 +14,7 @@ class OrderProcessorFactory implements FactoryInterface
     {
         $dropshipOrder = $container->get(DropshipOrder::class);
         $apiClient = $container->get(ApiClient::class);
-        return new OrderProcessor($dropshipOrder, $apiClient);
+        $dropshipStatus = $container->get(DropshipStatus::class);
+        return new OrderProcessor($dropshipOrder, $apiClient, $dropshipStatus);
     }
 }

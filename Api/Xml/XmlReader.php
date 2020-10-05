@@ -28,7 +28,7 @@ class XmlReader
 
     public function readModelsFromXML(string $xml, bool $flat = true)
     {
-        $reader = $this->reader->XML($xml);
+        $this->reader->XML($xml);
         return $this->readModels($this->reader, $flat);
     }
 

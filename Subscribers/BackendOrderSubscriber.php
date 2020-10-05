@@ -65,7 +65,6 @@ class BackendOrderSubscriber implements SubscriberInterface
         if ($action == 'save') return;
         $view = $args->getSubject()->View();
         if ($action == 'getList') {
-            $panels = $this->getPanels();
             $orderList = $view->getAssign('data');
             foreach ($orderList as &$order) {
                 $attr = $this->db->fetchAll(

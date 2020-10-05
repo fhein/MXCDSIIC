@@ -5,8 +5,10 @@ namespace MxcDropshipInnocigs\Order;
 use MxcCommons\Plugin\Service\DatabaseAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropship\Dropship\DropshipManager;
+use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\Api\ApiClient;
 use DateTime;
+use MxcDropshipInnocigs\Exception\ApiException;
 use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use Throwable;
 
@@ -23,8 +25,11 @@ class TrackingDataProcessor implements AugmentedObject
     /** @var string */
     protected $supplier;
 
-    /** @var string */
-    protected $dropshipTime;
+    /** @var array */
+    protected $order;
+
+    /** @var DropshipStatus */
+    protected $dropshipStatus;
 
     protected $trackingLinks = [
         'DHL' => '<a href="https://nolp.dhl.de/nextt-online-public/de/search?piececode={$trackingId}">{$trackingId}</a>',
@@ -47,55 +52,81 @@ class TrackingDataProcessor implements AugmentedObject
         'COUNTRY_CODE'   => 'countryCode',
     ];
 
-    public function __construct(ApiClient $client)
+    public function __construct(ApiClient $client, DropshipStatus $dropshipStatus)
     {
         $this->client = $client;
+        $this->dropshipStatus = $dropshipStatus;
         $this->supplier = MxcDropshipInnocigs::getModule()->getName();
     }
 
     public function updateTrackingData(array $order, $dropshipManager)
     {
         $this->dropshipManager = $dropshipManager;
+        $this->order = $order;
         try {
-            $details = $this->dropshipManager->getSupplierOrderDetails($this->supplier, $order['orderID']);
-            if (empty ($details)) return null;
-            // if we already have tracking infos for this order
-            $status = $order['mxcbc_dsi_ic_status'];
-            // @todo: check if null is ok, maybe we must return [ 'status' => ORDER_STATUS_TRACKING_DATA, 'message' => 'Ok.']
-            if ($status == DropshipManager::ORDER_STATUS_TRACKING_DATA) return null;
-            // because all InnoCigs details hold the same dropship date we need the first detail only
-            $this->dropshipTime = $details[0]['mxcbc_dsi_date'];
-            $trackingInfo = $this->getTrackingInfo($order);
-            $context = $this->dropshipManager->getNotificationContext($this->supplier, $order, $trackingInfo['contextId']);
-            if (isset($trackingInfo['trackings']))
-            {
-                $context['trackings'] = $trackingInfo['trackings'];
+            if ($dropshipManager->getSupplierOrderDetailsCount($this->supplier, $order['orderID']) == 0) return null;
+            // if InnoCigs tracking info was already processed we have nothing to do
+            if ($order['mxcbc_dsi_ic_status'] == DropshipManager::ORDER_STATUS_TRACKING_DATA) {
+                return $this->handleTrackingInfo();
             }
-            $this->dropshipManager->notifyStatus($order, $context);
+            $trackingInfo = $this->getTrackingInfo();
+            return $this->handleTrackingInfo($trackingInfo);
         } catch (Throwable $e) {
-
+            [$status, $message] = $dropshipManager->handleDropshipException(
+                $this->supplier,
+                'updateTrackingData',
+                $e,
+                true,
+                $order
+            );
+            return $this->dropshipStatus->setOrderStatus($order['orderID'], $status, $message);
         }
     }
 
-    protected function getTrackingInfo(array $order)
+    protected function handleTrackingInfo(array $trackingInfo = null)
     {
-        $orderNumber = $order['ordernumber'];
+        if ($trackingInfo === null) {
+            // if we do not have tracking infos we return the current order status
+            return [
+                'status'  => $this->order['mxcbc_dsi_ic_status'],
+                'message' => $this->order['mxcbc_dsi_ic_message'],
+            ];
+        }
+
+        $contextId = $trackingInfo['contextId'];
+        $context = $this->dropshipManager->getNotificationContext($this->supplier, 'updateTrackingData', $contextId, $this->order);
+        if (isset($trackingInfo['trackings']))
+        {
+            $context['trackings'] = $trackingInfo['trackings'];
+            $this->setTrackingData($trackingInfo);
+        }
+
+        $status = $context['status'];
+        $message = $context['message'];
+        $orderId = $this->order['orderID'];
+        $this->dropshipStatus->setOrderDetailStatus($orderId, $status, $message);
+        $result =  $this->dropshipStatus->setOrderStatus($orderId, $status, $message);
+        $this->dropshipManager->notifyStatus($context, $this->order);
+        return $result;
+    }
+
+    protected function getTrackingInfo()
+    {
+        $orderNumber = $this->order['ordernumber'];
 
         $info = $this->trackingDataByOrderCache[$orderNumber];
         if (! empty($info)) return $info;
 
-        $info = $this->getTrackingData($order);
+        $info = $this->getTrackingData();
         if ($info !== null) {
             $this->trackingDataByOrderCache[$orderNumber] = $info;
         }
         return $info;
     }
 
-    protected function getTrackingData(array $order)
+    protected function getTrackingData()
     {
-        $orderNumber = $order['ordernumber'];
-
-        $date = new DateTime($this->dropshipTime);
+        $date = new DateTime($this->order['mxcbc_dsi_ic_date']);
         $date = $date->format('Y-m-d');
 
         // if we already processed tracking data for the given $date tracking info for this order would be available in
@@ -109,7 +140,7 @@ class TrackingDataProcessor implements AugmentedObject
         $this->trackingDataByDateCache[$date] = $data;
 
         $this->processTrackingRawData($data);
-        return $this->trackingDataByOrderCache[$orderNumber];
+        return $this->trackingDataByOrderCache[$this->order['ordernumber']];
     }
 
     protected function processTrackingRawData(array $data)
@@ -133,7 +164,7 @@ class TrackingDataProcessor implements AugmentedObject
                 'orderNumber'   => $orderNumber,
                 'trackings'     => $trackings,
                 'status'        => DropshipManager::ORDER_STATUS_TRACKING_DATA,
-                'contextId'     => 'ORDER_TRACKING_DATA',
+                'contextId'     => 'STATUS_SUCCESS',
             ];
         }
     }
@@ -145,7 +176,7 @@ class TrackingDataProcessor implements AugmentedObject
             $data = $temp;
         }
         $data = $data['TRACKINGINFO'];
-        $trackingInfos = [];
+        $trackings = [];
         foreach ($data as $trackingInfo) {
             $trackingId = $trackingInfo['CODE'];
             $carrier = $trackingInfo['CARRIER'];
@@ -154,14 +185,14 @@ class TrackingDataProcessor implements AugmentedObject
             if ($link !== null) {
                 $trackingLink = str_replace('{$trackingId}', $trackingId, $link);
             }
-            $trackingInfos[] = [
+            $trackings[] = [
                 'carrier'    => $carrier,
                 'trackingId' => $trackingId,
                 'trackingLink' => $trackingLink,
                 'receiver'   => $this->getTrackingReceiver($trackingInfo),
             ];
         }
-        return $trackingInfos;
+        return $trackings;
     }
 
     protected function getTrackingReceiver(array $trackingInfo)
@@ -193,5 +224,44 @@ class TrackingDataProcessor implements AugmentedObject
                 'contextId'   => 'ORDER_CANCELLED',
             ];
         }
+    }
+
+    protected function setTrackingData(array $trackingInfo)
+    {
+        $trackings = $trackingInfo['trackings'];
+        $trackingIds = array_column($trackings, 'trackingId');
+        $carriers = array_column($trackings, 'carrier');
+        $this->setOrderTrackingData($trackingIds, $carriers);
+
+    }
+
+    protected function setOrderTrackingData(array $trackingIds, array $carriers)
+    {
+        $swTrackingIds = $this->order['trackingcode'];
+        if (empty($swTrackingIds)) {
+            $swTrackingIds = $trackingIds;
+        } else {
+            $swTrackingIds = array_map('trim', explode(',', $swTrackingIds));
+            $swTrackingIds = array_unique(array_merge($swTrackingIds, $trackingIds));
+        }
+
+        $this->db->executeUpdate('
+            UPDATE 
+                s_order o
+            INNER JOIN
+                s_order_attributes oa ON oa.orderID = o.id
+            SET
+                o.trackingcode               = :trackingCode,
+                oa.mxcbc_dsi_ic_tracking_ids = :trackingIds,
+                oa.mxcbc_dsi_ic_carriers     = :carriers
+            WHERE                
+                o.id = :id
+            ', [
+                'trackingCode'  => implode(', ', $swTrackingIds),
+                'trackingIds'   => implode(', ', $trackingIds),
+                'carriers'      => implode(', ', $carriers),
+                'id'            => $this->order['orderID'],
+            ]
+        );
     }
 }

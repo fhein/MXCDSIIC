@@ -7,9 +7,14 @@ use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
 use MxcCommons\Toolbox\Shopware\TaxTool;
+use MxcDropship\Dropship\DropshipManager;
 use MxcDropshipInnocigs\Api\ApiClient;
 use MxcDropshipInnocigs\Companion\DropshippersCompanion;
+use MxcDropshipInnocigs\Exception\ApiException;
+use MxcDropshipInnocigs\MxcDropshipInnocigs;
+use MxcDropshipInnocigs\Order\DropshipStatus;
 use MxcDropshipIntegrator\Models\Variant;
+use Throwable;
 
 /**
  * This job pulls the Inncigs purchase and recommended retail prices and updates
@@ -25,16 +30,23 @@ class UpdatePrices implements AugmentedObject
 
     protected $companion;
 
+    /** @var DropshipManager */
+    protected $dropshipManager;
+
     protected $variantRepository;
 
     protected $dropshipImportPresent = false;
 
     protected $vatFactor;
 
-    public function __construct(ApiClient $apiClient, DropshippersCompanion $companion)
+    protected $supplier;
+
+    public function __construct(ApiClient $apiClient, DropshippersCompanion $companion, DropshipManager $dropshipManager)
     {
         $this->apiClient = $apiClient;
         $this->companion = $companion;
+        $this->dropshipManager = $dropshipManager;
+        $this->supplier = MxcDropshipInnocigs::getModule()->getName();
         $this->vatFactor = 1 + TaxTool::getCurrentVatPercentage() / 100;
     }
 
@@ -49,35 +61,37 @@ class UpdatePrices implements AugmentedObject
 
     public function run()
     {
-        $this->updatePrices();
-        $this->log->info('Price update job completed.');
-    }
+        try {
+            throw new \RuntimeException('Some error.');
+            $modelPrices = $this->apiClient->getPrices();
+            $detailPrices = $this->companion->validate() ? $this->companion->getDetailPrices() : $this->getDetailPrices();
+            $changes = false;
+            foreach ($detailPrices as $number => $detailPrice) {
+                // if we still have a product that InnoCigs removed already we do not have a model price
+                if (! isset($modelPrices[$number]['purchasePrice'])) continue;
 
-    public function updatePrices()
-    {
-        $modelPrices = $this->apiClient->getPrices();
-        $detailPrices = $this->companion->validate() ? $this->companion->getDetailPrices() : $this->getDetailPrices();
-        $changes = false;
-        foreach ($detailPrices as $number => $detailPrice) {
-            // if we still have a product that InnoCigs removed already we do not have a model price
-            if (! isset($modelPrices[$number]['purchasePrice'])) continue;
+                $currentPurchasePrice = $detailPrice['purchasePrice'];
+                $newPurchasePrice = $modelPrices[$number]['purchasePrice'];
 
-            $currentPurchasePrice = $detailPrice['purchasePrice'];
-            $newPurchasePrice = $modelPrices[$number]['purchasePrice'];
-
-            if ($newPurchasePrice != $currentPurchasePrice) {
-                $changes = true;
-                $id = $detailPrice['id'];
-                $retailPrice = $modelPrices[$number]['recommendedRetailPrice'];
-                $this->setDetailPrices($id, $newPurchasePrice, $retailPrice);
-                $this->log->debug('Adjusted detail prices: '. $number);
-                if (! $this->dropshipImportPresent) continue;
-                $this->setVariantPrices($number, $newPurchasePrice, $retailPrice);
-                $this->log->debug('Adjusted variant prices:' . $number);
+                if ($newPurchasePrice != $currentPurchasePrice) {
+                    $changes = true;
+                    $id = $detailPrice['id'];
+                    $retailPrice = $modelPrices[$number]['recommendedRetailPrice'];
+                    $this->setDetailPrices($id, $newPurchasePrice, $retailPrice);
+                    $this->log->debug('Adjusted detail prices: '. $number);
+                    if (! $this->dropshipImportPresent) continue;
+                    $this->setVariantPrices($number, $newPurchasePrice, $retailPrice);
+                    $this->log->debug('Adjusted variant prices:' . $number);
+                }
             }
-        }
-        if ($this->dropshipImportPresent && $changes) {
-            $this->modelManager->flush();
+            if ($this->dropshipImportPresent && $changes) {
+                $this->modelManager->flush();
+            }
+            $this->log->info('Price update job successfully completed.');
+            return true;
+        } catch (Throwable $e) {
+            $this->dropshipManager->handleDropshipException($this->supplier, 'updatePrices', $e, true);
+            return false;
         }
     }
 
