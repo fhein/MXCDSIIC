@@ -62,7 +62,7 @@ class UpdatePrices implements AugmentedObject
     public function run()
     {
         try {
-            throw new \RuntimeException('Some error.');
+            // throw new \RuntimeException('Some error.');
             $modelPrices = $this->apiClient->getPrices();
             $detailPrices = $this->companion->validate() ? $this->companion->getDetailPrices() : $this->getDetailPrices();
             $changes = false;

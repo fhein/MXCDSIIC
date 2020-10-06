@@ -46,7 +46,7 @@ class UpdateStock implements AugmentedObject
     public function run()
     {
         try {
-            throw ApiException::fromHttpStatus(404);
+            // throw ApiException::fromHttpStatus(404);
             $stockInfo = $this->client->getStockInfo();
             $sql = '
                 SELECT 
