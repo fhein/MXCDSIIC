@@ -76,7 +76,7 @@ class UpdateStock implements AugmentedObject
             $this->log->info('Stock update job completed.');
             return true;
         } catch (Throwable $e) {
-            $this->dropshipManager->handleDropshipException($this->supplier, 'updatePrices', $e, true);
+            $this->dropshipManager->handleDropshipException($this->supplier, 'updateStock', $e, true);
             return false;
         }
     }
