@@ -63,11 +63,15 @@ class OrderProcessor implements AugmentedObject
             $this->details = $details;
 
             $shippingAddress = $this->getShippingAddress($orderId);
+            $originator = $dropshipManager->getOriginator();
             $this->validateShippingAddress($shippingAddress);
 
-            $this->dropshipOrder->create($order['ordernumber'], $shippingAddress);
+            $this->dropshipOrder->create($order['ordernumber'], $originator, $shippingAddress);
             $this->addOrderDetails($order['ordernumber']);
-            $result = $this->dropshipOrder->send();
+            $request = $this->dropshipOrder->getXmlRequest(true);
+            $this->log->debug('Order Request:');
+            $this->log->debug(var_export($request, true));
+            $result = $this->client->sendOrder($request);
             return $this->dropshipStatus->orderSuccessfullySent($order, $result);
         } catch (Throwable $e) {
             [$status, $message] = $dropshipManager->handleDropshipException(
@@ -189,15 +193,15 @@ class OrderProcessor implements AugmentedObject
                     $valid = false;
                 } else {
                     // if we do not have supplier errors we have a general API error
-                    // so a more general error handling is required
+                    // which requires a more general error handling
                     throw $e;
                 }
             }
             $pos++;
         }
-        foreach ($errors as $status) {
-            $this->setOrderDetailPositionStatus($status);
-        }
+
+        $this->setOrderDetailPositionStatus($errors);
+
         if (! $valid) {
             throw ApiException::fromInvalidOrderPositions($errors);
         }
@@ -226,23 +230,25 @@ class OrderProcessor implements AugmentedObject
         ', ['articleDetailId' => $articleDetailId])[0];
     }
 
-    private function setOrderDetailPositionStatus(array $status)
+    private function setOrderDetailPositionStatus(array $errors)
     {
-        $this->db->executeUpdate('
-            UPDATE s_order_details_attributes oda
-            SET
-                oda.mxcbc_dsi_message       = :message,
-                oda.mxcbc_dsi_status        = :code,
-                oda.mxcbc_dsi_instock       = :instock,
-                oda.mxcbc_dsi_purchaseprice = :purchasePrice
-            WHERE 
-                oda.detailID = :detailId
-        ', [
-            'detailId'      => $status['detailId'],
-            'code'          => $status['code'],
-            'message'       => $status['message'],
-            'purchasePrice' => $status['purchasePrice'],
-            'instock'       => $status['instock'],
-        ]);
+        foreach ($errors as $status) {
+            $this->db->executeUpdate('
+                UPDATE s_order_details_attributes oda
+                SET
+                    oda.mxcbc_dsi_message       = :message,
+                    oda.mxcbc_dsi_status        = :code,
+                    oda.mxcbc_dsi_instock       = :instock,
+                    oda.mxcbc_dsi_purchaseprice = :purchasePrice
+                WHERE 
+                    oda.detailID = :detailId
+            ', [
+                'detailId'      => $status['detailId'],
+                'code'          => $status['code'],
+                'message'       => $status['message'],
+                'purchasePrice' => $status['purchasePrice'],
+                'instock'       => $status['instock'],
+            ]);
+        }
     }
 }
