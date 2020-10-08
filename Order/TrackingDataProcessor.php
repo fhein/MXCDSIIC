@@ -231,37 +231,37 @@ class TrackingDataProcessor implements AugmentedObject
         $trackings = $trackingInfo['trackings'];
         $trackingIds = array_column($trackings, 'trackingId');
         $carriers = array_column($trackings, 'carrier');
-        $this->setOrderTrackingData($trackingIds, $carriers);
-
-    }
-
-    protected function setOrderTrackingData(array $trackingIds, array $carriers)
-    {
-        $swTrackingIds = $this->order['trackingcode'];
-        if (empty($swTrackingIds)) {
-            $swTrackingIds = $trackingIds;
-        } else {
-            $swTrackingIds = array_map('trim', explode(',', $swTrackingIds));
-            $swTrackingIds = array_unique(array_merge($swTrackingIds, $trackingIds));
-        }
 
         $this->db->executeUpdate('
             UPDATE 
-                s_order o
-            INNER JOIN
-                s_order_attributes oa ON oa.orderID = o.id
+                s_order_attributes oa
             SET
-                o.trackingcode               = :trackingCode,
                 oa.mxcbc_dsi_ic_tracking_ids = :trackingIds,
                 oa.mxcbc_dsi_ic_carriers     = :carriers
             WHERE                
-                o.id = :id
+                oa.orderID = :id
             ', [
-                'trackingCode'  => implode(', ', $swTrackingIds),
                 'trackingIds'   => implode(', ', $trackingIds),
                 'carriers'      => implode(', ', $carriers),
                 'id'            => $this->order['orderID'],
             ]
         );
+    }
+
+    // retrieve an array containing the InnoCigs tracking ids
+    // note: we ignore the carriers here because Shopware does not support multiple carriers
+    public function getTrackingIds(array $order, $dropshipManager)
+    {
+        $trackings = $this->db->fetchRow('
+            SELECT 
+                oa.mxcbc_dsi_ic_tracking_ids as ids
+            FROM
+                s_order_attributes oa
+            WHERE
+                oa.orderID  = :id
+        ', ['id' => $order['orderID']]);
+        $trackingIds = $trackings['ids'];
+        if (empty($trackingIds)) return [];
+        return array_map('trim', explode(',', $trackingIds));
     }
 }
