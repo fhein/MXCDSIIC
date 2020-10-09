@@ -47,6 +47,7 @@ class OrderProcessor implements AugmentedObject
         $shippingAddress = [];
         $orderId = $order['orderID'];
         try {
+            throw ApiException::fromHttpStatus(404);
             // if this order was already sent to InnoCigs (but possibly not to other suppliers)
             // we do nothing and return the current status
             if ($order['mxcbc_dsi_ic_status'] != DropshipManager::ORDER_STATUS_OPEN) {
@@ -74,7 +75,7 @@ class OrderProcessor implements AugmentedObject
             $result = $this->client->sendOrder($request);
             return $this->dropshipStatus->orderSuccessfullySent($order, $result);
         } catch (Throwable $e) {
-            [$status, $message] = $dropshipManager->handleDropshipException(
+            $result = $dropshipManager->handleDropshipException(
                 $this->supplier,
                 'sendOrder',
                 $e,
@@ -82,7 +83,7 @@ class OrderProcessor implements AugmentedObject
                 $order,
                 $shippingAddress
             );
-            return $this->dropshipStatus->setOrderStatus($orderId, $status, $message);
+            return $this->dropshipStatus->setOrderStatus($orderId, $result['status'], $result['message']);
         }
     }
 
