@@ -33,6 +33,9 @@ class OrderProcessor implements AugmentedObject
     /** @var array */
     protected $details;
 
+    /** @var DropshipManager */
+    protected $dropshipManager;
+
     public function __construct(DropshipOrder $dropshipOrder, ApiClient $client, DropshipStatus $dropshipStatus)
     {
         $this->dropshipOrder = $dropshipOrder;
@@ -41,21 +44,43 @@ class OrderProcessor implements AugmentedObject
         $this->supplier = MxcDropshipInnocigs::getModule()->getName();
     }
 
+    public function initOrder(int $orderId, $dropshipManager)
+    {
+        $count = $dropshipManager->getSupplierOrderDetailsCount($this->supplier, $orderId);
+        if ($count == 0) return;
+
+        $this->dropshipStatus->setOrderDetailStatus(
+            $orderId,
+            DropshipManager::ORDER_STATUS_OPEN,
+            $this->supplier . ' Dropship-Produkt.'
+        );
+        $this->db->executeUpdate('
+            UPDATE 
+                s_order_attributes oa
+            SET
+                oa.mxcbc_dsi_ic_status       = :status,
+                oa.mxcbc_dsi_ic_message      = :message
+            WHERE                
+                oa.orderID = :id
+            ', [
+                'status'     => DropshipManager::ORDER_STATUS_OPEN,
+                'message'    => 'Neue Bestellung mit InnoCigs Dropship-Artikeln.',
+                'id'         => $orderId,
+            ]
+        );
+    }
+
     public function sendOrder(array $order, $dropshipManager)
     {
         /** @var DropshipManager $dropshipManager */
+        $this->dropshipManager = $dropshipManager;
         $shippingAddress = [];
         $orderId = $order['orderID'];
         try {
-            throw ApiException::fromHttpStatus(404);
             // if this order was already sent to InnoCigs (but possibly not to other suppliers)
             // we do nothing and return the current status
-            if ($order['mxcbc_dsi_ic_status'] != DropshipManager::ORDER_STATUS_OPEN) {
-                return [
-                    'status' => $order['mxcbc_dsi_ic_status'],
-                    'message' => $order['mxcbc_dsi_ic_message']
-                ];
-            }
+            if ($order['mxcbc_dsi_ic_status'] != DropshipManager::ORDER_STATUS_OPEN) return null;
+
             // get all order details to be ordered from InnoCigs
             $details = $dropshipManager->getSupplierOrderDetails($this->supplier, $orderId);
             // We return true only if we actually successfully send an order to InnoCigs.
@@ -73,9 +98,9 @@ class OrderProcessor implements AugmentedObject
             $this->log->debug('Order Request:');
             $this->log->debug(var_export($request, true));
             $result = $this->client->sendOrder($request);
-            return $this->dropshipStatus->orderSuccessfullySent($order, $result);
+            return $this->orderSuccessfullySent($order, $result);
         } catch (Throwable $e) {
-            $result = $dropshipManager->handleDropshipException(
+            $context = $dropshipManager->handleDropshipException(
                 $this->supplier,
                 'sendOrder',
                 $e,
@@ -83,7 +108,7 @@ class OrderProcessor implements AugmentedObject
                 $order,
                 $shippingAddress
             );
-            return $this->dropshipStatus->setOrderStatus($orderId, $result['status'], $result['message']);
+            return $this->dropshipStatus->setOrderStatus($order, $context);
         }
     }
 
@@ -125,9 +150,9 @@ class OrderProcessor implements AugmentedObject
             $errors[] = DropshipException::RECIPIENT_INVALID_COUNTRY_CODE;
         }
         // ***!*** DEBUG
-//        for ($i = 2201; $i < 2211; $i++) {
-//            $errors[] = $i;
-//        }
+        for ($i = 2201; $i < 2211; $i++) {
+            $errors[] = $i;
+        }
         // ***!***
 
         if (! empty($errors)) {
@@ -252,4 +277,39 @@ class OrderProcessor implements AugmentedObject
             ]);
         }
     }
+
+    public function orderSuccessfullySent(array $order, array $data)
+    {
+        $orderId = $order['orderID'];
+        $status = DropshipManager::ORDER_STATUS_SENT;
+        $message = $data['message'];
+
+        $this->dropshipStatus->setOrderDetailStatus($orderId, $status, $message);
+
+        $this->db->executeUpdate('
+            UPDATE 
+                s_order_attributes oa
+            SET
+                oa.mxcbc_dsi_ic_status       = :status,
+                oa.mxcbc_dsi_ic_message      = :message,
+                oa.mxcbc_dsi_ic_dropship_id  = :dropshipId,
+                oa.mxcbc_dsi_ic_date         = :date,
+                oa.mxcbc_dsi_ic_order_id     = :orderId
+            WHERE                
+                oa.orderID = :id
+            ', [
+                'status'     => $status,
+                'message'    => $message,
+                'dropshipId' => $data['dropshipId'],
+                'orderId'    => $data['supplierOrderId'],
+                'date'       => date('d.m.Y H:i:s'),
+                'id'         => $orderId,
+            ]
+        );
+
+        $context = $this->dropshipManager->getNotificationContext($this->supplier, 'sendOrder', 'STATUS_SUCCESS', $order);
+        $this->dropshipManager->notifyStatus($context, $order);
+        return $context;
+    }
+
 }

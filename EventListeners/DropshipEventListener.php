@@ -25,6 +25,7 @@ class DropshipEventListener implements AugmentedObject
         $sharedEvents->attach(DropshipManager::class, 'sendOrder', [$this, 'onSendOrder']);
         $sharedEvents->attach(DropshipManager::class, 'updateTrackingData', [$this, 'onUpdateTrackingData']);
         $sharedEvents->attach(DropshipManager::class, 'getTrackingIds', [$this, 'onGetTrackingIds']);
+        $sharedEvents->attach(DropshipManager::class, 'initOrder', [$this, 'onInitOrder']);
     }
 
     public function onUpdatePrices(EventInterface $e)
@@ -35,6 +36,14 @@ class DropshipEventListener implements AugmentedObject
     public function onUpdateStock(EventInterface $e)
     {
         return $this->services->get(UpdateStock::class)->run();
+    }
+
+    public function onInitOrder(EventInterface $e)
+    {
+        /** @var OrderProcessor $processor */
+        $processor = $this->services->get(OrderProcessor::class);
+        // set order's initial status
+        return $processor->initOrder($e->getParam('orderId'), $e->getTarget());
     }
 
     public function onSendOrder(EventInterface $e)
@@ -58,5 +67,4 @@ class DropshipEventListener implements AugmentedObject
         $processor = $this->services->get(TrackingDataProcessor::class);
         return $processor->getTrackingIds($e->getParam('order'), $e->getTarget());
     }
-
 }

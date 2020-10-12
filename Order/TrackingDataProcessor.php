@@ -66,32 +66,24 @@ class TrackingDataProcessor implements AugmentedObject
         try {
             if ($dropshipManager->getSupplierOrderDetailsCount($this->supplier, $order['orderID']) == 0) return null;
             // if InnoCigs tracking info was already processed we have nothing to do
-            if ($order['mxcbc_dsi_ic_status'] == DropshipManager::ORDER_STATUS_TRACKING_DATA) {
-                return $this->handleTrackingInfo();
-            }
+            if ($order['mxcbc_dsi_ic_status'] == DropshipManager::ORDER_STATUS_TRACKING_DATA) return null;
             $trackingInfo = $this->getTrackingInfo();
             return $this->handleTrackingInfo($trackingInfo);
         } catch (Throwable $e) {
-            [$status, $message] = $dropshipManager->handleDropshipException(
+            $context = $dropshipManager->handleDropshipException(
                 $this->supplier,
                 'updateTrackingData',
                 $e,
                 true,
                 $order
             );
-            return $this->dropshipStatus->setOrderStatus($order['orderID'], $status, $message);
+            return $this->dropshipStatus->setOrderStatus($order, $context);
         }
     }
 
     protected function handleTrackingInfo(array $trackingInfo = null)
     {
-        if ($trackingInfo === null) {
-            // if we do not have tracking infos we return the current order status
-            return [
-                'status'  => $this->order['mxcbc_dsi_ic_status'],
-                'message' => $this->order['mxcbc_dsi_ic_message'],
-            ];
-        }
+        if ($trackingInfo === null) return null;
 
         $contextId = $trackingInfo['contextId'];
         $context = $this->dropshipManager->getNotificationContext($this->supplier, 'updateTrackingData', $contextId, $this->order);
@@ -105,9 +97,9 @@ class TrackingDataProcessor implements AugmentedObject
         $message = $context['message'];
         $orderId = $this->order['orderID'];
         $this->dropshipStatus->setOrderDetailStatus($orderId, $status, $message);
-        $result =  $this->dropshipStatus->setOrderStatus($orderId, $status, $message);
+        $this->dropshipStatus->setOrderStatus($this->order, $context);
         $this->dropshipManager->notifyStatus($context, $this->order);
-        return $result;
+        return $context;
     }
 
     protected function getTrackingInfo()
