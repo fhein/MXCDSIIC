@@ -51,7 +51,7 @@ class OrderProcessor implements AugmentedObject
 
         $this->dropshipStatus->setOrderDetailStatus(
             $orderId,
-            DropshipManager::ORDER_STATUS_OPEN,
+            DropshipManager::DROPSHIP_STATUS_OPEN,
             $this->supplier . ' Dropship-Produkt.'
         );
         $this->db->executeUpdate('
@@ -63,7 +63,7 @@ class OrderProcessor implements AugmentedObject
             WHERE                
                 oa.orderID = :id
             ', [
-                'status'     => DropshipManager::ORDER_STATUS_OPEN,
+                'status'     => DropshipManager::DROPSHIP_STATUS_OPEN,
                 'message'    => 'Neue Bestellung mit InnoCigs Dropship-Artikeln.',
                 'id'         => $orderId,
             ]
@@ -79,7 +79,7 @@ class OrderProcessor implements AugmentedObject
         try {
             // if this order was already sent to InnoCigs (but possibly not to other suppliers)
             // we do nothing and return the current status
-            if ($order['mxcbc_dsi_ic_status'] != DropshipManager::ORDER_STATUS_OPEN) return null;
+            if ($order['mxcbc_dsi_ic_status'] != DropshipManager::DROPSHIP_STATUS_OPEN) return null;
 
             // get all order details to be ordered from InnoCigs
             $details = $dropshipManager->getSupplierOrderDetails($this->supplier, $orderId);
@@ -150,9 +150,9 @@ class OrderProcessor implements AugmentedObject
             $errors[] = DropshipException::RECIPIENT_INVALID_COUNTRY_CODE;
         }
         // ***!*** DEBUG
-        for ($i = 2201; $i < 2211; $i++) {
-            $errors[] = $i;
-        }
+//        for ($i = 2201; $i < 2211; $i++) {
+//            $errors[] = $i;
+//        }
         // ***!***
 
         if (! empty($errors)) {
@@ -281,7 +281,7 @@ class OrderProcessor implements AugmentedObject
     public function orderSuccessfullySent(array $order, array $data)
     {
         $orderId = $order['orderID'];
-        $status = DropshipManager::ORDER_STATUS_SENT;
+        $status = DropshipManager::DROPSHIP_STATUS_SENT;
         $message = $data['message'];
 
         $this->dropshipStatus->setOrderDetailStatus($orderId, $status, $message);

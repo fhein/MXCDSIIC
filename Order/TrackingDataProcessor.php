@@ -66,7 +66,7 @@ class TrackingDataProcessor implements AugmentedObject
         try {
             if ($dropshipManager->getSupplierOrderDetailsCount($this->supplier, $order['orderID']) == 0) return null;
             // if InnoCigs tracking info was already processed we have nothing to do
-            if ($order['mxcbc_dsi_ic_status'] == DropshipManager::ORDER_STATUS_TRACKING_DATA) return null;
+            if ($order['mxcbc_dsi_ic_status'] == DropshipManager::DROPSHIP_STATUS_CLOSED) return null;
             $trackingInfo = $this->getTrackingInfo();
             return $this->handleTrackingInfo($trackingInfo);
         } catch (Throwable $e) {
@@ -155,7 +155,7 @@ class TrackingDataProcessor implements AugmentedObject
                 'dropshipId'    => $trackingData['DROPSHIP_ID'],
                 'orderNumber'   => $orderNumber,
                 'trackings'     => $trackings,
-                'status'        => DropshipManager::ORDER_STATUS_TRACKING_DATA,
+                'status'        => DropshipManager::DROPSHIP_STATUS_CLOSED,
                 'contextId'     => 'STATUS_SUCCESS',
             ];
         }
@@ -212,7 +212,7 @@ class TrackingDataProcessor implements AugmentedObject
                 'dropshipId'  => $cancellation['DROPSHIP_ID'],
                 'orderNumber' => $orderNumber,
                 'message'     => $cancellation['MESSAGE'],
-                'status'      => DropshipManager::ORDER_STATUS_CANCELLED,
+                'status'      => DropshipManager::DROPSHIP_STATUS_CANCELLED,
                 'contextId'   => 'ORDER_CANCELLED',
             ];
         }
