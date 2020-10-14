@@ -18,13 +18,13 @@ class Shopware_Controllers_Backend_MxcDropshipInnocigs extends Shopware_Controll
         ];
     }
 
-    protected function getDropshipStatusPanel($status, string $message = null)
+    protected function getDropshipStatusPanel($status, string $message = null, string $color = null)
     {
         $panel = $this->getPanels()[$status];
         $this->view->assign([
             'panel' => sprintf(
                 $this->statusPanelTemplate,
-                $panel['background'],
+                $color ?? $panel['background'],
                 $panel['text'],
                 $message ?? $panel['message'])
         ]);
@@ -35,17 +35,21 @@ class Shopware_Controllers_Backend_MxcDropshipInnocigs extends Shopware_Controll
     {
         $nrModules = $this->getDb()->fetchOne('SELECT COUNT(id) FROM s_mxcbc_dropship_module');
         if ($nrModules == 0) {
-            return $this->getDropshipStatusPanel($this->getPanels()['NO_DROPSHIP_MODULE']);
+            return $this->getDropshipStatusPanel('NO_DROPSHIP_MODULE');
         }
 
         $orderId = $this->Request()->getParam('orderId');
         $attr = $this->getOrderStatusInfo($orderId);
-        $orderType = $attr['orderType'];
-        if ($orderType == DropshipManager::ORDER_TYPE_OWNSTOCK) {
-            return $this->getDropshipStatusPanel('OWNSTOCK_ONLY');
-        }
         $status = $attr['dropshipStatus'];
         $message = $attr['message'];
+        $orderType = $attr['orderType'];
+
+//        if ($orderType == DropshipManager::ORDER_TYPE_OWNSTOCK) {
+//            return $this->getDropshipStatusPanel('OWNSTOCK_ONLY');
+//        }
+//        if ($status == DropshipManager::DROPSHIP_STATUS_OPEN && $orderType != DropshipManager::ORDER_TYPE_DROPSHIP) {
+//            return $this->getDropshipStatusPanel('OPEN_DROPSHIP_OWNSTOCK', $message);
+//        }
         return $this->getDropshipStatusPanel($status, $message);
     }
 
@@ -53,9 +57,10 @@ class Shopware_Controllers_Backend_MxcDropshipInnocigs extends Shopware_Controll
     {
         return $this->getDb()->fetchAll('
             SELECT 
-                mxcbc_dsi_ic_status as dropshipStatus,
-                mxcbc_dsi_ordertype as orderType,
-                mxcbc_dsi_message as message
+                o.cleared as paymentStatus,
+                oa.mxcbc_dsi_ic_status as dropshipStatus,
+                oa.mxcbc_dsi_ordertype as orderType,
+                oa.mxcbc_dsi_message as message
                 
             FROM s_order o
             LEFT JOIN s_order_attributes oa ON o.id = oa.orderID

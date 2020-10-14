@@ -7,7 +7,7 @@ Ext.define('Shopware.apps.MxcDsiInnocigs.order.view.list.List', {
     let me = this;
 
     let columns = me.callOverridden(arguments);
-    return Ext.Array.insert(columns, 0, [{
+    return Ext.Array.insert(columns, 1, [{
       header: 'IC',
       width: 30,
       sortable: false,

@@ -6,7 +6,7 @@ Ext.override(Shopware.apps.Order.view.detail.Overview, {
         let me = this;
 
         me.callParent(arguments);
-        me.items.insert(0, me.createMxcDsiIcStatusPanel());
+        me.items.insert(1, me.createMxcDsiIcStatusPanel());
         return me.items;
     },
 
