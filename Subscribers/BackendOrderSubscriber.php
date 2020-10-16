@@ -70,7 +70,7 @@ class BackendOrderSubscriber implements SubscriberInterface
             $orderList = $view->getAssign('data');
             foreach ($orderList as &$order) {
                 $bullet = $this->getBullet($order);
-                $order['mxcbc_dsi_bullet_background_color'] = $bullet['color'];
+                $order['mxcbc_dsi_bullet_background_color'] = $bullet['background'];
                 $order['mxcbc_dsi_bullet_title'] = $bullet['message'] ?? '';
             }
             $view->clearAssign('data');
@@ -230,37 +230,15 @@ class BackendOrderSubscriber implements SubscriberInterface
             'SELECT * from s_order_attributes oa WHERE oa.orderID = :orderId',
             ['orderId' => $order['id']]
         )[0];
-        $panelSelector = $attr['mxcbc_dsi_ic_status'];
-        $orderStatus = $order['status'];
-        $message = $attr['mxcbc_dsi_ic_message'];
-        $orderType = $attr['mxcbc_dsi_ordertype'];
         $panels = $this->getPanels();
-
-//        if ($orderStatus == Status::ORDER_STATE_COMPLETED) {
-//            $panelSelector = DropshipManager::DROPSHIP_STATUS_CLOSED;
-//        } elseif ($orderType == DropshipManager::ORDER_TYPE_OWNSTOCK) {
-//            $panelSelector = 'OWNSTOCK_ONLY';
-//        } else {
-//            $orderStatusAdjustColor = in_array(
-//                $orderStatus,
-//                [Status::ORDER_STATE_OPEN, Status::ORDER_STATE_IN_PROCESS]
-//            );
-//            $orderTypeAdjustColor = in_array(
-//                $panelSelector,
-//                [DropshipManager::DROPSHIP_STATUS_CLOSED, DropshipManager::DROPSHIP_STATUS_OPEN]
-//            ) && $orderType != DropshipManager::ORDER_TYPE_DROPSHIP;
-//
-//            if ($orderStatusAdjustColor && $orderTypeAdjustColor) {
-//                $panelSelector = 'OPEN_DROPSHIP_OWNSTOCK';
-//            }
-//        }
-
-//            $orderStatus == Status::ORDER_STATE_OPEN && $orderType != DropshipManager::ORDER_TYPE_DROPSHIP
-//            && in_array($panelSelector, [DropshipManager::DROPSHIP_STATUS_CLOSED, DropshipManager::DROPSHIP_STATUS_OPEN])) {
-//            // modify bullet color on open dropship orders containing products from own stock
-        return [
-            'color' => $panels[$panelSelector]['background'],
-            'message'  => $message,
-        ];
+        $status = $attr['mxcbc_dsi_ic_status'];
+        $message = $attr['mxcbc_dsi_ic_message'];
+        $paymentStatus = $order['cleared'];
+        if ($paymentStatus == Status::PAYMENT_STATE_COMPLETELY_PAID && $status == DropshipManager::DROPSHIP_STATUS_OPEN) {
+            return $panels['DROPSHIP_SCHEDULED'];
+        }
+        $panel = $panels[$status];
+        $panel['message'] = $message;
+        return $panel;
     }
 }

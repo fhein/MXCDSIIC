@@ -33,22 +33,10 @@ class DropshipStatus implements AugmentedObject
         // if a recoverable error occured, we just update the status message but leave the order status
         // in order to enable an automatic retry
         $status = $context['recoverable'] ? $order['mxcbc_dsi_ic_status'] : $context['status'];
-        $this->db->executeUpdate('
-            UPDATE 
-                s_order_attributes oa
-            SET
-                oa.mxcbc_dsi_ic_status       = :status,
-                oa.mxcbc_dsi_ic_message      = :message
-            WHERE                
-                oa.orderID = :id
-            ', [
-                'status'     => $status,
-                'message'    => $context['message'],
-                'id'         => $order['orderID'],
-            ]
-        );
+        $this->dbSetOrderStatus($order['orderID'], $status, $context['message']);
         return $context;
     }
+
 
     public function setOrderDetailStatus(int $orderId, int $status, string $message)
     {
@@ -66,6 +54,24 @@ class DropshipStatus implements AugmentedObject
                 'status'   => $status,
                 'message'  => $message,
                 'detailIds' => implode(',', $detailIds),
+            ]
+        );
+    }
+
+    public function dbSetOrderStatus(int $orderId, int $status, string$message): void
+    {
+        $this->db->executeUpdate('
+            UPDATE 
+                s_order_attributes oa
+            SET
+                oa.mxcbc_dsi_ic_status       = :status,
+                oa.mxcbc_dsi_ic_message      = :message
+            WHERE                
+                oa.orderID = :id
+            ', [
+                'status'  => $status,
+                'message' => $message,
+                'id'      => $orderId,
             ]
         );
     }

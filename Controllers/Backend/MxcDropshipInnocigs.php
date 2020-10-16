@@ -3,6 +3,7 @@
 use MxcDropship\Dropship\DropshipManager;
 use Shopware\Components\CSRFWhitelistAware;
 use MxcDropship\MxcDropship;
+use Shopware\Models\Order\Status;
 
 class Shopware_Controllers_Backend_MxcDropshipInnocigs extends Shopware_Controllers_Backend_ExtJs implements CSRFWhitelistAware
 {
@@ -33,16 +34,17 @@ class Shopware_Controllers_Backend_MxcDropshipInnocigs extends Shopware_Controll
 
     public function getDropshipStatusPanelAction()
     {
-        $nrModules = $this->getDb()->fetchOne('SELECT COUNT(id) FROM s_mxcbc_dropship_module');
-        if ($nrModules == 0) {
-            return $this->getDropshipStatusPanel('NO_DROPSHIP_MODULE');
-        }
-
         $orderId = $this->Request()->getParam('orderId');
         $attr = $this->getOrderStatusInfo($orderId);
         $status = $attr['dropshipStatus'];
-        $message = $attr['message'];
-        $orderType = $attr['orderType'];
+        $paymentStatus = $attr['paymentStatus'];
+        $message = null;
+
+        if ($status == DropshipManager::DROPSHIP_STATUS_OPEN && $paymentStatus == Status::PAYMENT_STATE_COMPLETELY_PAID) {
+            $status = 'DROPSHIP_SCHEDULED';
+        } else {
+            $message = $attr['message'];
+        }
 
 //        if ($orderType == DropshipManager::ORDER_TYPE_OWNSTOCK) {
 //            return $this->getDropshipStatusPanel('OWNSTOCK_ONLY');
@@ -56,11 +58,12 @@ class Shopware_Controllers_Backend_MxcDropshipInnocigs extends Shopware_Controll
     protected function getOrderStatusInfo(int $orderId)
     {
         return $this->getDb()->fetchAll('
-            SELECT 
+            SELECT
+                o.status as orderStatus,
                 o.cleared as paymentStatus,
-                oa.mxcbc_dsi_ic_status as dropshipStatus,
                 oa.mxcbc_dsi_ordertype as orderType,
-                oa.mxcbc_dsi_message as message
+                oa.mxcbc_dsi_ic_status as dropshipStatus,
+                oa.mxcbc_dsi_ic_message as message
                 
             FROM s_order o
             LEFT JOIN s_order_attributes oa ON o.id = oa.orderID

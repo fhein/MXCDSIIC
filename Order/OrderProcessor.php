@@ -54,19 +54,10 @@ class OrderProcessor implements AugmentedObject
             DropshipManager::DROPSHIP_STATUS_OPEN,
             $this->supplier . ' Dropship-Produkt.'
         );
-        $this->db->executeUpdate('
-            UPDATE 
-                s_order_attributes oa
-            SET
-                oa.mxcbc_dsi_ic_status       = :status,
-                oa.mxcbc_dsi_ic_message      = :message
-            WHERE                
-                oa.orderID = :id
-            ', [
-                'status'     => DropshipManager::DROPSHIP_STATUS_OPEN,
-                'message'    => 'Neue Bestellung mit InnoCigs Dropship-Artikeln.',
-                'id'         => $orderId,
-            ]
+        $this->dropshipStatus->dbSetOrderStatus(
+            $orderId,
+            DropshipManager::DROPSHIP_STATUS_OPEN,
+            'Bestellung mit InnoCigs Dropship-Artikeln. Wird versandt, wenn bezahlt.'
         );
     }
 
@@ -78,13 +69,13 @@ class OrderProcessor implements AugmentedObject
         $orderId = $order['orderID'];
         try {
             // if this order was already sent to InnoCigs (but possibly not to other suppliers)
-            // we do nothing and return the current status
-            if ($order['mxcbc_dsi_ic_status'] != DropshipManager::DROPSHIP_STATUS_OPEN) return null;
+            // we do nothing and return null
+            $status = DropshipManager::DROPSHIP_STATUS_OPEN;
+            if ($order['mxcbc_dsi_ic_status'] != $status) return null;
 
             // get all order details to be ordered from InnoCigs
             $details = $dropshipManager->getSupplierOrderDetails($this->supplier, $orderId);
-            // We return true only if we actually successfully send an order to InnoCigs.
-            // If the order does not contain any InnoCigs products, we have nothing to do.
+            // just for sanitary reasons, $details should never be empty if we get here
             if (empty($details)) return null;
             $this->details = $details;
 
