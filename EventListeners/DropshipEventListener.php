@@ -43,7 +43,7 @@ class DropshipEventListener implements AugmentedObject
         /** @var OrderProcessor $processor */
         $processor = $this->services->get(OrderProcessor::class);
         // set order's initial status
-        return $processor->initOrder($e->getParam('orderId'), $e->getTarget());
+        return $processor->initOrder($e->getParam('order'), $e->getParam('resetError'), $e->getTarget());
     }
 
     public function onSendOrder(EventInterface $e)

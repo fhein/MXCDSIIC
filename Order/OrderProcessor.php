@@ -44,21 +44,35 @@ class OrderProcessor implements AugmentedObject
         $this->supplier = MxcDropshipInnocigs::getModule()->getName();
     }
 
-    public function initOrder(int $orderId, $dropshipManager)
+    public function initOrder(array $order, bool $resetError, $dropshipManager)
     {
-        $count = $dropshipManager->getSupplierOrderDetailsCount($this->supplier, $orderId);
-        if ($count == 0) return;
+        $currentStatus = $order['mxcbc_dsi_ic_status'];
+        if ($currentStatus != DropshipManager::DROPSHIP_STATUS_OPEN && $currentStatus < DropshipManager::DROPSHIP_STATUS_ERROR) {
+            // dropship order was already sent to InnoCigs
+            return;
+        }
 
-        $this->dropshipStatus->setOrderDetailStatus(
-            $orderId,
-            DropshipManager::DROPSHIP_STATUS_OPEN,
-            $this->supplier . ' Dropship-Produkt.'
-        );
-        $this->dropshipStatus->dbSetOrderStatus(
-            $orderId,
-            DropshipManager::DROPSHIP_STATUS_OPEN,
-            'Bestellung mit InnoCigs Dropship-Artikeln. Wird versandt, wenn bezahlt.'
-        );
+        $orderId = $order['orderID'];
+        $count = $dropshipManager->getSupplierOrderDetailsCount($this->supplier, $orderId);
+        if ($count > 0 && $currentStatus > DropshipManager::DROPSHIP_STATUS_ERROR && ! $resetError) {
+            return;
+        }
+        $initialStatus = $dropshipManager->getInitialOrderStatus();
+        if ($count == 0) {
+            $initialStatus = $initialStatus[DropshipManager::ORDER_TYPE_OWNSTOCK];
+            $detailMessage = null;
+        } else {
+            if ($currentStatus > DropshipManager::DROPSHIP_STATUS_ERROR && ! $resetError) {
+                return;
+            }
+            $initialStatus = $initialStatus[DropshipManager::ORDER_TYPE_DROPSHIP];
+            $detailMessage = $this->supplier . 'Dropship-Artikel';
+        }
+
+        $status = $initialStatus['status'];
+        $message = $initialStatus['message'];
+        $this->dropshipStatus->setOrderDetailStatus($orderId, $status, $detailMessage);
+        $this->dropshipStatus->dbSetOrderStatus($orderId,$status, $message);
     }
 
     public function sendOrder(array $order, $dropshipManager)
@@ -196,7 +210,7 @@ class OrderProcessor implements AugmentedObject
                     $errors[] = $error;
                 } else {
                     $error['message'] = 'Position ok.';
-                    $error['code'] = DropshipManager::NO_ERROR;
+                    $error['code'] = DropshipManager::DROPSHIP_STATUS_OPEN;
                     $error['severity'] = DropshipLogger::NOTICE;
                     $errors[] = $error;
                     $this->dropshipOrder->addPosition($productNumber, $quantity);

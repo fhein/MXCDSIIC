@@ -38,7 +38,7 @@ class DropshipStatus implements AugmentedObject
     }
 
 
-    public function setOrderDetailStatus(int $orderId, int $status, string $message)
+    public function setOrderDetailStatus(int $orderId, ?int $status, ?string $message)
     {
         $details = $this->dropshipManager->getSupplierOrderDetails($this->supplier, $orderId);
         $detailIds = array_column($details, 'detailID');
@@ -58,7 +58,7 @@ class DropshipStatus implements AugmentedObject
         );
     }
 
-    public function dbSetOrderStatus(int $orderId, int $status, string$message): void
+    public function dbSetOrderStatus(int $orderId, ?int $status, ?string$message): void
     {
         $this->db->executeUpdate('
             UPDATE 

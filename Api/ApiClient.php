@@ -69,13 +69,13 @@ class ApiClient implements AugmentedObject
     // note: we currently support one dropship order per request (the InnoCigs API supports a list of dropship)
     public function sendOrder($xmlRequest)
     {
-        return [
-            'orderNumber'       => '20015',
-            'message'           => 'Dropship erfolgreich übertragen',
-            'status'            => 'OK',
-            'dropshipId'        => '12345',
-            'supplierOrderId'   => '6789',
-        ];
+//        return [
+//            'orderNumber'       => '20015',
+//            'message'           => 'Dropship erfolgreich übertragen',
+//            'status'            => 'OK',
+//            'dropshipId'        => '12345',
+//            'supplierOrderId'   => '6789',
+//        ];
         $cmd = $this->authUrl . '&command=dropship&xml=' . urlencode($xmlRequest);
         $data = $this->httpReader->readXml($cmd);
         $data = $data['DROPSHIPPING']['DROPSHIP'];
@@ -99,7 +99,7 @@ class ApiClient implements AugmentedObject
                 <TRACKING>
                     <DROPSHIP>
                         <DROPSHIP_ID>112</DROPSHIP_ID>
-                        <ORDERS_NUMBER>20150</ORDERS_NUMBER>
+                        <ORDERS_NUMBER>20166</ORDERS_NUMBER>
                         <TRACKINGS>
                             <TRACKINGINFO>
                                 <CARRIER>DHL</CARRIER>
