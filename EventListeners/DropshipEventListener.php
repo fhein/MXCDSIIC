@@ -3,6 +3,9 @@
 namespace MxcDropshipInnocigs\EventListeners;
 
 use MxcCommons\EventManager\EventInterface;
+use MxcCommons\EventManager\EventManagerInterface;
+use MxcCommons\EventManager\ListenerAggregateInterface;
+use MxcCommons\EventManager\ListenerAggregateTrait;
 use MxcCommons\EventManager\SharedEventManagerInterface;
 use MxcCommons\Plugin\Service\ServicesAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
@@ -15,17 +18,18 @@ use MxcDropshipInnocigs\Order\TrackingDataProcessor;
 use Shopware\Models\Order\Order;
 use Throwable;
 
-class DropshipEventListener implements AugmentedObject
+class DropshipEventListener implements AugmentedObject, ListenerAggregateInterface
 {
     use ServicesAwareTrait;
+    use ListenerAggregateTrait;
 
-    public function attach(SharedEventManagerInterface $sharedEvents) {
-        $sharedEvents->attach(DropshipManager::class, 'updatePrices', [$this, 'onUpdatePrices']);
-        $sharedEvents->attach(DropshipManager::class, 'updateStock', [$this, 'onUpdateStock']);
-        $sharedEvents->attach(DropshipManager::class, 'sendOrder', [$this, 'onSendOrder']);
-        $sharedEvents->attach(DropshipManager::class, 'updateTrackingData', [$this, 'onUpdateTrackingData']);
-        $sharedEvents->attach(DropshipManager::class, 'getTrackingIds', [$this, 'onGetTrackingIds']);
-        $sharedEvents->attach(DropshipManager::class, 'initOrder', [$this, 'onInitOrder']);
+    public function attach(EventManagerInterface $events, $priority = 1) {
+        $events->attach('updatePrices', [$this, 'onUpdatePrices'], $priority);
+        $events->attach('updateStock', [$this, 'onUpdateStock'], $priority);
+        $events->attach('sendOrder', [$this, 'onSendOrder'], $priority);
+        $events->attach('updateTrackingData', [$this, 'onUpdateTrackingData'], $priority);
+        $events->attach('getTrackingIds', [$this, 'onGetTrackingIds'], $priority);
+        $events->attach('initOrder', [$this, 'onInitOrder'], $priority);
     }
 
     public function onUpdatePrices(EventInterface $e)
