@@ -7,6 +7,7 @@ use MxcDropshipInnocigs\Jobs\UpdatePrices;
 use MxcDropshipInnocigs\Jobs\UpdateStock;
 use MxcDropshipInnocigs\Order\DropshipStatus;
 use MxcDropshipInnocigs\Order\TrackingDataProcessor;
+use MxcDropshipInnocigs\PluginListeners\CompanionDataImport;
 use MxcDropshipInnocigs\PluginListeners\RegisterDropshipModule;
 use MxcDropshipInnocigs\Api\ApiClient;
 use MxcDropshipInnocigs\Article\ArticleRegistry;
@@ -21,7 +22,8 @@ use Shopware\Bundle\AttributeBundle\Service\TypeMapping;
 
 return [
     'plugin_listeners'   => [
-        RegisterDropshipModule::class
+        RegisterDropshipModule::class,
+        CompanionDataImport::class,
     ],
     'doctrine' => [
         'attributes' => [

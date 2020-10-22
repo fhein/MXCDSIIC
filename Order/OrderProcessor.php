@@ -215,7 +215,6 @@ class OrderProcessor implements AugmentedObject
                     $errors[] = $error;
                     $this->dropshipOrder->addPosition($productNumber, $quantity);
                 }
-                // ***!***
             } catch (DropshipException $e) {
                 $code = $e->getCode();
                 if ($code === DropshipException::MODULE_API_SUPPLIER_ERRORS) {
@@ -316,5 +315,4 @@ class OrderProcessor implements AugmentedObject
         $this->dropshipManager->notifyStatus($context, $order);
         return $context;
     }
-
 }
