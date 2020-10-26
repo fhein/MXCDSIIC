@@ -4,7 +4,6 @@ namespace MxcDropshipInnocigs\PluginListeners;
 
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
-use MxcDropship\Dropship\DropshipManager;
 use MxcDropship\Models\DropshipModule;
 use MxcDropship\MxcDropship;
 use MxcDropshipInnocigs\MxcDropshipInnocigs;

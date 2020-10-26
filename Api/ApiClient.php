@@ -69,13 +69,13 @@ class ApiClient implements AugmentedObject
     // note: we currently support one dropship order per request (the InnoCigs API supports a list of dropship)
     public function sendOrder($xmlRequest)
     {
-        return [
-            'orderNumber'       => '20015',
-            'message'           => 'Dropship erfolgreich übertragen',
-            'status'            => 'OK',
-            'dropshipId'        => '12345',
-            'supplierOrderId'   => '6789',
-        ];
+//        return [
+//            'orderNumber'       => '20015',
+//            'message'           => 'Dropship erfolgreich übertragen',
+//            'status'            => 'OK',
+//            'dropshipId'        => '12345',
+//            'supplierOrderId'   => '6789',
+//        ];
         $cmd = $this->authUrl . '&command=dropship&xml=' . urlencode($xmlRequest);
         $data = $this->httpReader->readXml($cmd);
         $data = $data['DROPSHIPPING']['DROPSHIP'];
@@ -92,7 +92,8 @@ class ApiClient implements AugmentedObject
         ];
     }
 
-    public function getTrackingData($date = null)
+    // date string format Y-m-d
+    public function getTrackingData(string $date)
     {
         $xml = '
             <INNOCIGS_API_RESPONSE>
@@ -167,12 +168,9 @@ class ApiClient implements AugmentedObject
             </CANCELLATION>
         </INNOCIGS_API_RESPONSE>';
 
-        if (! $date instanceof DateTime) {
-            $date = (new DateTime())->format('Y-m-d');
-        }
-
         $cmd = $this->authUrl . '&command=tracking&day=' . $date;
-        return $this->httpReader->readXml2($xml);
+        return $this->httpReader->readXml($cmd);
+//        return $this->httpReader->readXml2($xml);
     }
 
     protected function getPriceData(array $data)

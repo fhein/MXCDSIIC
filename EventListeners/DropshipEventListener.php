@@ -24,12 +24,12 @@ class DropshipEventListener implements AugmentedObject, ListenerAggregateInterfa
     use ListenerAggregateTrait;
 
     public function attach(EventManagerInterface $events, $priority = 1) {
-        $events->attach('updatePrices', [$this, 'onUpdatePrices'], $priority);
-        $events->attach('updateStock', [$this, 'onUpdateStock'], $priority);
-        $events->attach('sendOrder', [$this, 'onSendOrder'], $priority);
-        $events->attach('updateTrackingData', [$this, 'onUpdateTrackingData'], $priority);
-        $events->attach('getTrackingIds', [$this, 'onGetTrackingIds'], $priority);
-        $events->attach('initOrder', [$this, 'onInitOrder'], $priority);
+        $this->listeners[] = $events->attach('updatePrices', [$this, 'onUpdatePrices'], $priority);
+        $this->listeners[] = $events->attach('updateStock', [$this, 'onUpdateStock'], $priority);
+        $this->listeners[] = $events->attach('sendOrder', [$this, 'onSendOrder'], $priority);
+        $this->listeners[] = $events->attach('updateTrackingData', [$this, 'onUpdateTrackingData'], $priority);
+        $this->listeners[] = $events->attach('getTrackingIds', [$this, 'onGetTrackingIds'], $priority);
+        $this->listeners[] = $events->attach('initOrder', [$this, 'onInitOrder'], $priority);
     }
 
     public function onUpdatePrices(EventInterface $e)

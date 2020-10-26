@@ -3,6 +3,7 @@
 namespace MxcDropshipInnocigs\Article;
 
 use Enlight_Components_Db_Adapter_Pdo_Mysql;
+use MxcCommons\Plugin\Service\DatabaseAwareTrait;
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
@@ -16,6 +17,7 @@ use MxcDropshipInnocigs\Api\ApiClient;
 class ArticleRegistry implements AugmentedObject
 {
     use ModelManagerAwareTrait;
+    use DatabaseAwareTrait;
     use LoggerAwareTrait;
 
     const NO_ERROR                      = 0;
@@ -43,11 +45,10 @@ class ArticleRegistry implements AugmentedObject
         'mxcbc_dsi_ic_retailprice'    => null,
         'mxcbc_dsi_ic_instock'        => null,
     ];
+
     private $client;
 
-    private $db;
-
-    public function __construct(ApiClient $client, Enlight_Components_Db_Adapter_Pdo_Mysql $db)
+    public function __construct(ApiClient $client)
     {
         if ($client === null) {
             throw InvalidArgumentException::fromInvalidObject(
@@ -55,15 +56,7 @@ class ArticleRegistry implements AugmentedObject
                 $client
             );
         }
-        if ($db === null) {
-            throw InvalidArgumentException::fromInvalidObject(
-                Enlight_Components_Db_Adapter_Pdo_Mysql::class,
-                $db);
-        }
-
         $this->client = $client;
-        $this->db = $db;
-
         $this->select = implode(', ', array_keys($this->fields));
     }
 
