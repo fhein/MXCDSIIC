@@ -100,7 +100,7 @@ class ApiClient implements AugmentedObject
                 <TRACKING>
                     <DROPSHIP>
                         <DROPSHIP_ID>112</DROPSHIP_ID>
-                        <ORDERS_NUMBER>20179</ORDERS_NUMBER>
+                        <ORDERS_NUMBER>20190</ORDERS_NUMBER>
                         <TRACKINGS>
                             <TRACKINGINFO>
                                 <CARRIER>DHL</CARRIER>
@@ -116,21 +116,6 @@ class ApiClient implements AugmentedObject
                                     <COUNTRY_CODE>DE</COUNTRY_CODE>
                                 </RECEIVER>
                             </TRACKINGINFO>
-                            <TRACKINGINFO>
-                                <CARRIER>DHL</CARRIER>
-                                <CODE>TR000002</CODE>
-                                <RECEIVER>
-                                    <COMPANY>Musterfirma</COMPANY>
-                                    <COMPANY2 />
-                                    <FIRSTNAME>Hans</FIRSTNAME>
-                                    <LASTNAME>Muster</LASTNAME>
-                                    <STREET_ADDRESS>Musterweg 99</STREET_ADDRESS>
-                                    <POSTCODE>22761</POSTCODE>
-                                    <CITY>Hamburg</CITY>
-                                    <COUNTRY_CODE>DE</COUNTRY_CODE>
-                                </RECEIVER>
-                            </TRACKINGINFO>
-
                         </TRACKINGS>
                     </DROPSHIP>
                     <DROPSHIP>

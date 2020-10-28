@@ -141,8 +141,9 @@ class TrackingDataProcessor implements AugmentedObject
         $this->processTrackingData($data['TRACKING']);
     }
 
-    protected function processTrackingData(array $data)
+    protected function processTrackingData(?array $data)
     {
+        if (empty($data)) return;
         if (isset($data['DROPSHIP']['DROPSHIP_ID'])) {
             $temp['DROPSHIP'][0] = $data['DROPSHIP'];
             $data = $temp;
@@ -196,7 +197,7 @@ class TrackingDataProcessor implements AugmentedObject
         return $receiver;
     }
 
-    protected function processCancellations(array $data)
+    protected function processCancellations(?array $data)
     {
         if (empty($data)) {
             return;

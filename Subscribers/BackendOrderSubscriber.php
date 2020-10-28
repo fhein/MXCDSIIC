@@ -42,8 +42,8 @@ class BackendOrderSubscriber implements SubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-//            'Enlight_Controller_Action_PostDispatch_Backend_Order'                      => 'onBackendOrderPostDispatch',
-//            'Enlight_Controller_Dispatcher_ControllerPath_Backend_MxcDropshipInnocigs'  => 'onGetControllerPath',
+            'Enlight_Controller_Action_PostDispatch_Backend_Order'                      => 'onBackendOrderPostDispatch',
+            'Enlight_Controller_Dispatcher_ControllerPath_Backend_MxcDropshipInnocigs'  => 'onGetControllerPath',
         ];
     }
 

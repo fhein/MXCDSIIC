@@ -79,7 +79,6 @@ class ArticleRegistry implements AugmentedObject
         $this->updateSettings($detail->getId(), $data);
     }
 
-
     public function register(int $detailId, string $productNumber, int $deliveryMode)
     {
         if (empty($productNumber)) return [self::ERROR_INVALID_ARGUMENT, $this->fields];
