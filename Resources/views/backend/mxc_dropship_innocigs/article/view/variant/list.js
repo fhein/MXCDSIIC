@@ -7,33 +7,22 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.variant.List', {
     let me = this;
     let columns = me.callOverridden(arguments);
 
-    Ext.Array.push(columns, {
-      header: 'DSI',
+    return Ext.Array.insert(columns, 0, [{
+      header: 'IC',
       width: 30,
-      renderer: me.isDropshipProduct
-    });
-
-    return columns;
+      sortable: false,
+      renderer: me.isInnocigsDropshipProduct
+    }]);
   },
 
-  isDropshipProduct: function(value, metaData, record) {
-    // let active = record.data.mxcbc_dsi_ic_active;
-    // let preferOwnStock = record.data.mxcbc_dsi_ic_preferownstock;
-    // let color = null;
-    // debugger;
-    //
-    // if (!active) {
-    //   color = 'red';
-    // } else if (preferOwnStock) {
-    //   color = 'orange';
-    // } else {
-    //   color = 'limegreen';
-    // }
-    // return '<div style="width:16px;height:16px;background:' + color + ';color:white;margin:0 auto;'
-    //         + 'text-align:center;border-radius:3px;padding-top:0;</div>';
+  isInnocigsDropshipProduct: function(value, metaData, record) {
+    let background = record.raw.mxcbc_dsi_ic_bullet_color;
+    let title = record.raw.mxcbc_dsi_ic_bullet_title;
+    if (background === undefined) return '<div>&nbsp</div>';
+    return '<div style="width:16px;height:16px;background:' + background
+      + ';color:white;margin: 0 auto;text-align:center;border-radius: 4px;padding-top: 2px;" ' +
+      'title="' + title +'">&nbsp</div>';
+  },
 
-    if (record.data.mxcbc_dsi_ic_active)
-      return record.raw.mxcbc_dsi_ic_dropship;
-  }
 });
 //{/block}

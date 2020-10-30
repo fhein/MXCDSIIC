@@ -3,6 +3,7 @@
 namespace MxcDropshipInnocigs\Order;
 
 use MxcCommons\Plugin\Service\DatabaseAwareTrait;
+use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropship\Dropship\DropshipManager;
 use MxcDropship\Exception\DropshipException;
@@ -118,18 +119,17 @@ class TrackingDataProcessor implements AugmentedObject
 
     protected function getTrackingData()
     {
-        $date = new DateTime($this->order['mxcbc_dsi_ic_date']);
+        $date = new DateTime();
         $date = $date->format('Y-m-d');
 
-        // if we already processed tracking data for the given $date tracking info for this order would be available in
-        // $this->trackingDataByOrderCache if it was available
-        $data = $this->trackingDataByDateCache[$date];
-        if ($data !== null) return null;
-
         // this caching prevents multiple API calls for the same date
-        // and sets up $this->trackingDataByOrderCache for all orders of that date
-        $data = $this->client->getTrackingData($date);
-        $this->trackingDataByDateCache[$date] = $data;
+        $data = $this->trackingDataByDateCache[$date];
+        if ($data === null) {
+            // this caching prevents multiple API calls for the same date
+            // and sets up $this->trackingDataByOrderCache for all orders of that date
+            $data = $this->client->getTrackingData($date);
+            $this->trackingDataByDateCache[$date] = $data;
+        }
 
         $this->processTrackingRawData($data);
         return $this->trackingDataByOrderCache[$this->order['ordernumber']];

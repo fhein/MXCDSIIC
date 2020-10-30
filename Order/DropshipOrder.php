@@ -2,17 +2,22 @@
 
 namespace MxcDropshipInnocigs\Order;
 
+use MxcCommons\Plugin\Service\ClassConfigAwareTrait;
+use MxcCommons\ServiceManager\AugmentedObject;
 use SimpleXMLElement;
 
 // This class is used by OrderProcessor to create the XML Request for ApiClient->sendOrder
 
-class DropshipOrder
+class DropshipOrder implements AugmentedObject
 {
+    use ClassConfigAwareTrait;
+
     private $positions;
     private $orderNumber;
     private $originator;
     private $recipient;
 
+    private $cost;
 
     public function create(string $orderNumber, array $originator, array $shippingAddress)
     {
@@ -20,6 +25,7 @@ class DropshipOrder
         $this->originator = $originator;
         $this->recipient = null;
         $this->positions = [];
+        $this->cost = $this->classConfig['cost']['dropship']['base'];
 
         $this->recipient = [
             'COMPANY'        => $shippingAddress['company'],
@@ -33,7 +39,7 @@ class DropshipOrder
         ];
     }
 
-    public function addPosition(string $productnumber, int $quantity)
+    public function addPosition(string $productnumber, int $quantity, float $purchasePrice)
     {
         $this->positions[] = [
             'PRODUCT' => [
@@ -41,6 +47,8 @@ class DropshipOrder
                 'QUANTITY'       => $quantity,
             ],
         ];
+        $this->cost += $this->classConfig['cost']['dropship']['line'];
+        $this->cost += $quantity * ($this->classConfig['cost']['dropship']['pick'] + $purchasePrice);
     }
 
     public function setOrderNumber(string $orderNumber)
@@ -88,5 +96,10 @@ class DropshipOrder
                 $xml->addChild("$key", "$value");
             }
         }
+    }
+
+    public function getCost()
+    {
+        return $this->cost;
     }
 }

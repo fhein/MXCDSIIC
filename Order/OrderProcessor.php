@@ -103,6 +103,10 @@ class OrderProcessor implements AugmentedObject
             $this->log->debug('Order Request:');
             $this->log->debug(var_export($request, true));
             $result = $this->client->sendOrder($request);
+
+            $result['price'] = $order['invoice_amount_net'];
+            $result['cost'] = $this->dropshipOrder->getCost();
+
             return $this->orderSuccessfullySent($order, $result);
         } catch (Throwable $e) {
             $context = $dropshipManager->handleDropshipException(
@@ -175,6 +179,7 @@ class OrderProcessor implements AugmentedObject
         foreach ($this->details as $detail) {
             $productInfo = $this->getProductInfo($detail['articleDetailID']);
             $productNumber = $productInfo['productNumber'];
+            $purchasePrice = $productInfo['purchasePrice'];
             $quantity = $detail['quantity'];
             $detailId = $detail['detailID'];
 
@@ -183,7 +188,7 @@ class OrderProcessor implements AugmentedObject
                 'detailId'      => $detailId,
                 'orderNumber'   => $orderNumber,
                 'productNumber' => $productNumber,
-                'purchasePrice' => $productInfo['purchasePrice'],
+                'purchasePrice' => $purchasePrice,
                 'quantity'      => $quantity,
                 'instock'       => null,
             ];
@@ -213,7 +218,7 @@ class OrderProcessor implements AugmentedObject
                     $error['code'] = DropshipManager::DROPSHIP_STATUS_OPEN;
                     $error['severity'] = DropshipLogger::NOTICE;
                     $errors[] = $error;
-                    $this->dropshipOrder->addPosition($productNumber, $quantity);
+                    $this->dropshipOrder->addPosition($productNumber, $quantity, $purchasePrice);
                 }
             } catch (DropshipException $e) {
                 $code = $e->getCode();
@@ -312,7 +317,21 @@ class OrderProcessor implements AugmentedObject
         );
 
         $context = $this->dropshipManager->getNotificationContext($this->supplier, 'sendOrder', 'STATUS_SUCCESS', $order);
+        $this->addMarginCalculation($context, $data);
         $this->dropshipManager->notifyStatus($context, $order);
         return $context;
     }
+
+    protected function addMarginCalculation(array &$context, array $data)
+    {
+        $price = $data['price'];
+        $cost = $data['cost'];
+        $context['price'] = str_replace('.', ',', strval($price));
+        $context['cost'] = str_replace('.', ',', strval($cost));
+        $revenue = $price - $cost;
+        $context['revenue'] = str_replace('.', ',', strval($revenue));
+        $context['margin'] = str_replace('.', ',', round($revenue / $price * 100, 2));
+        return $context;
+    }
+
 }
