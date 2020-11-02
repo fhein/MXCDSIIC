@@ -30,6 +30,7 @@ class DropshipEventListener implements AugmentedObject, ListenerAggregateInterfa
         $this->listeners[] = $events->attach('updateTrackingData', [$this, 'onUpdateTrackingData'], $priority);
         $this->listeners[] = $events->attach('getTrackingIds', [$this, 'onGetTrackingIds'], $priority);
         $this->listeners[] = $events->attach('initOrder', [$this, 'onInitOrder'], $priority);
+        $this->listeners[] = $events->attach('getCost', [$this, 'onGetCost'], $priority);
     }
 
     public function onUpdatePrices(EventInterface $e)
@@ -48,6 +49,13 @@ class DropshipEventListener implements AugmentedObject, ListenerAggregateInterfa
         $processor = $this->services->get(OrderProcessor::class);
         // set order's initial status
         return $processor->initOrder($e->getParam('order'), $e->getParam('resetError'), $e->getTarget());
+    }
+
+    public function onGetCost(EventInterface $e)
+    {
+        /** @var OrderProcessor $processor */
+        $processor = $this->services->get(OrderProcessor::class);
+        return $processor->getCost($e->getParam('order'));
     }
 
     public function onSendOrder(EventInterface $e)

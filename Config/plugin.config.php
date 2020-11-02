@@ -42,6 +42,8 @@ return [
                 'mxcbc_dsi_ic_date'           => ['type' => TypeMapping::TYPE_STRING],
                 'mxcbc_dsi_ic_dropship_id'    => ['type' => TypeMapping::TYPE_STRING],
                 'mxcbc_dsi_ic_order_id'       => ['type' => TypeMapping::TYPE_STRING],
+                'mxcbc_dsi_ic_dropship_cost'  => ['type' => TypeMapping::TYPE_FLOAT],
+                'mxcbc_dsi_ic_product_cost'   => ['type' => TypeMapping::TYPE_FLOAT],
             ]
         ],
     ],

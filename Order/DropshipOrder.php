@@ -8,16 +8,12 @@ use SimpleXMLElement;
 
 // This class is used by OrderProcessor to create the XML Request for ApiClient->sendOrder
 
-class DropshipOrder implements AugmentedObject
+class DropshipOrder
 {
-    use ClassConfigAwareTrait;
-
     private $positions;
     private $orderNumber;
     private $originator;
     private $recipient;
-
-    private $cost;
 
     public function create(string $orderNumber, array $originator, array $shippingAddress)
     {
@@ -25,7 +21,6 @@ class DropshipOrder implements AugmentedObject
         $this->originator = $originator;
         $this->recipient = null;
         $this->positions = [];
-        $this->cost = $this->classConfig['cost']['dropship']['base'];
 
         $this->recipient = [
             'COMPANY'        => $shippingAddress['company'],
@@ -47,8 +42,6 @@ class DropshipOrder implements AugmentedObject
                 'QUANTITY'       => $quantity,
             ],
         ];
-        $this->cost += $this->classConfig['cost']['dropship']['line'];
-        $this->cost += $quantity * ($this->classConfig['cost']['dropship']['pick'] + $purchasePrice);
     }
 
     public function setOrderNumber(string $orderNumber)
@@ -96,10 +89,5 @@ class DropshipOrder implements AugmentedObject
                 $xml->addChild("$key", "$value");
             }
         }
-    }
-
-    public function getCost()
-    {
-        return $this->cost;
     }
 }

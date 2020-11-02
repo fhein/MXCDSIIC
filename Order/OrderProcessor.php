@@ -2,6 +2,7 @@
 
 namespace MxcDropshipInnocigs\Order;
 
+use MxcCommons\Plugin\Service\ClassConfigAwareTrait;
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\Plugin\Service\DatabaseAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
@@ -17,6 +18,7 @@ class OrderProcessor implements AugmentedObject
 {
     use DatabaseAwareTrait;
     use LoggerAwareTrait;
+    use ClassConfigAwareTrait;
 
     /** @var DropshipOrder */
     protected $dropshipOrder;
@@ -35,6 +37,9 @@ class OrderProcessor implements AugmentedObject
 
     /** @var DropshipManager */
     protected $dropshipManager;
+
+    protected $dropshipCost;
+    protected $productCost;
 
     public function __construct(DropshipOrder $dropshipOrder, ApiClient $client, DropshipStatus $dropshipStatus)
     {
@@ -98,14 +103,13 @@ class OrderProcessor implements AugmentedObject
             $this->validateShippingAddress($shippingAddress);
 
             $this->dropshipOrder->create($order['ordernumber'], $originator, $shippingAddress);
+
+            $this->productCost = 0;
+            $this->dropshipCost = $this->classConfig['dropshipCost']['base'];
+
             $this->addOrderDetails($order['ordernumber']);
             $request = $this->dropshipOrder->getXmlRequest(true);
-            $this->log->debug('Order Request:');
-            $this->log->debug(var_export($request, true));
             $result = $this->client->sendOrder($request);
-
-            $result['price'] = $order['invoice_amount_net'];
-            $result['cost'] = $this->dropshipOrder->getCost();
 
             return $this->orderSuccessfullySent($order, $result);
         } catch (Throwable $e) {
@@ -219,6 +223,7 @@ class OrderProcessor implements AugmentedObject
                     $error['severity'] = DropshipLogger::NOTICE;
                     $errors[] = $error;
                     $this->dropshipOrder->addPosition($productNumber, $quantity, $purchasePrice);
+                    $this->registerLineCost($quantity, $purchasePrice);
                 }
             } catch (DropshipException $e) {
                 $code = $e->getCode();
@@ -240,6 +245,13 @@ class OrderProcessor implements AugmentedObject
         if (! $valid) {
             throw ApiException::fromInvalidOrderPositions($errors);
         }
+    }
+
+    protected function registerLineCost(int $quantity, float $purchasePrice)
+    {
+        $this->dropshipCost += $this->classConfig['dropshipCost']['line'];
+        $this->dropshipCost += $quantity * $this->classConfig['dropshipCost']['pick'];
+        $this->productCost  += $quantity * $purchasePrice;
     }
 
     public function getShippingAddress(int $orderId)
@@ -299,39 +311,38 @@ class OrderProcessor implements AugmentedObject
             UPDATE 
                 s_order_attributes oa
             SET
-                oa.mxcbc_dsi_ic_status       = :status,
-                oa.mxcbc_dsi_ic_message      = :message,
-                oa.mxcbc_dsi_ic_dropship_id  = :dropshipId,
-                oa.mxcbc_dsi_ic_date         = :date,
-                oa.mxcbc_dsi_ic_order_id     = :orderId
+                oa.mxcbc_dsi_ic_status        = :status,
+                oa.mxcbc_dsi_ic_message       = :message,
+                oa.mxcbc_dsi_ic_dropship_id   = :dropshipId,
+                oa.mxcbc_dsi_ic_product_cost  = :productCost,
+                oa.mxcbc_dsi_ic_dropship_cost = :dropshipCost,
+                oa.mxcbc_dsi_ic_date          = :date,
+                oa.mxcbc_dsi_ic_order_id      = :orderId
             WHERE                
                 oa.orderID = :id
             ', [
-                'status'     => $status,
-                'message'    => $message,
-                'dropshipId' => $data['dropshipId'],
-                'orderId'    => $data['supplierOrderId'],
-                'date'       => date('d.m.Y H:i:s'),
-                'id'         => $orderId,
+                'status'       => $status,
+                'message'      => $message,
+                'dropshipId'   => $data['dropshipId'],
+                'orderId'      => $data['supplierOrderId'],
+                'productCost'  => round($this->productCost, 2),
+                'dropshipCost' => round($this->dropshipCost, 2),
+                'date'         => date('d.m.Y H:i:s'),
+                'id'           => $orderId,
             ]
         );
 
         $context = $this->dropshipManager->getNotificationContext($this->supplier, 'sendOrder', 'STATUS_SUCCESS', $order);
-        $this->addMarginCalculation($context, $data);
         $this->dropshipManager->notifyStatus($context, $order);
         return $context;
     }
 
-    protected function addMarginCalculation(array &$context, array $data)
+    public function getCost(array $order)
     {
-        $price = $data['price'];
-        $cost = $data['cost'];
-        $context['price'] = str_replace('.', ',', strval($price));
-        $context['cost'] = str_replace('.', ',', strval($cost));
-        $revenue = $price - $cost;
-        $context['revenue'] = str_replace('.', ',', strval($revenue));
-        $context['margin'] = str_replace('.', ',', round($revenue / $price * 100, 2));
-        return $context;
+        return [
+            'supplier' => $this->supplier,
+            'dropship' => $order['mxcbc_dsi_ic_dropship_cost'],
+            'product'  => $order['mxcbc_dsi_ic_product_cost'],
+        ];
     }
-
 }
