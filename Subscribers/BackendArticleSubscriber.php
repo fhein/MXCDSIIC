@@ -50,7 +50,6 @@ class BackendArticleSubscriber implements SubscriberInterface
         ];
     }
 
-
     /**
      * Overwrite and manage the backend extjs-resources
      *

@@ -53,34 +53,33 @@ class BackendOrderSubscriber implements SubscriberInterface
 
     }
 
-    protected function getPanels()
-    {
-        return $this->panels ?? $this->panels = MxcDropship::getPanelConfig();
-    }
-
     // this is the backend gui
     public function onBackendOrderPostDispatch(Enlight_Event_EventArgs $args)
     {
         $request = $args->getRequest();
         $action = $request->getActionName();
-
-        if ($action == 'save') return;
+        $this->log->debug('Order PostDispatch: ' . $action);
         $view = $args->getSubject()->View();
-        if ($action == 'getList') {
-            $orderList = $view->getAssign('data');
-            foreach ($orderList as &$order) {
-                $bullet = $this->getBullet($order);
-                $order['mxcbc_dsi_bullet_background_color'] = $bullet['background'];
-                $order['mxcbc_dsi_bullet_title'] = $bullet['message'] ?? '';
-            }
-            $view->clearAssign('data');
-            $view->assign('data', $orderList);
+
+        switch ($action) {
+            case 'save':
+                return;
+            case 'load':
+                $view->extendsTemplate('backend/mxc_dropship_innocigs/order/view/detail/overview.js');
+                $view->extendsTemplate('backend/mxc_dropship_innocigs/order/view/list/list.js');
+                break;
+            case 'getList':
+                $orderList = $view->getAssign('data');
+                foreach ($orderList as &$order) {
+                    $bullet = $this->getBullet($order);
+                    $order['mxcbc_dsi_ic_bullet_color'] = $bullet['background'];
+                    $order['mxcbc_dsi_ic_bullet_title'] = $bullet['message'] ?? '';
+                }
+                $view->clearAssign('data');
+                $view->assign('data', $orderList);
+                break;
         }
-
-        $view->extendsTemplate('backend/mxc_dropship_innocigs/order/view/detail/overview.js');
-        $view->extendsTemplate('backend/mxc_dropship_innocigs/order/view/list/list.js');
     }
-
     public function getBullet(array $order)
     {
         $attr = $this->db->fetchAll(
@@ -97,5 +96,10 @@ class BackendOrderSubscriber implements SubscriberInterface
         $panel = $panels[$status];
         $panel['message'] = $message;
         return $panel;
+    }
+
+    protected function getPanels()
+    {
+        return $this->panels ?? $this->panels = MxcDropship::getPanelConfig();
     }
 }

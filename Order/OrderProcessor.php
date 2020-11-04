@@ -341,7 +341,7 @@ class OrderProcessor implements AugmentedObject
     {
         return [
             'supplier' => $this->supplier,
-            'dropship' => $order['mxcbc_dsi_ic_dropship_cost'],
+            'shipping' => $order['mxcbc_dsi_ic_dropship_cost'],
             'product'  => $order['mxcbc_dsi_ic_product_cost'],
         ];
     }

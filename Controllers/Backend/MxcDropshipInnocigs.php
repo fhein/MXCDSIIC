@@ -45,13 +45,6 @@ class Shopware_Controllers_Backend_MxcDropshipInnocigs extends Shopware_Controll
         } else {
             $message = $attr['message'];
         }
-
-//        if ($orderType == DropshipManager::ORDER_TYPE_OWNSTOCK) {
-//            return $this->getDropshipStatusPanel('OWNSTOCK_ONLY');
-//        }
-//        if ($status == DropshipManager::DROPSHIP_STATUS_OPEN && $orderType != DropshipManager::ORDER_TYPE_DROPSHIP) {
-//            return $this->getDropshipStatusPanel('OPEN_DROPSHIP_OWNSTOCK', $message);
-//        }
         return $this->getDropshipStatusPanel($status, $message);
     }
 

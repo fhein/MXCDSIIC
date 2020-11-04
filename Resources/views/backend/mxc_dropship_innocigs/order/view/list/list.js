@@ -16,8 +16,8 @@ Ext.define('Shopware.apps.MxcDsiInnocigs.order.view.list.List', {
   },
 
   getMxcDsiColumn: function (value, metaData, record) {
-    let background = record.raw.mxcbc_dsi_bullet_background_color;
-    let title = record.raw.mxcbc_dsi_bullet_title;
+    let background = record.raw.mxcbc_dsi_ic_bullet_color;
+    let title = record.raw.mxcbc_dsi_ic_bullet_title;
     if (background === undefined) return '<div>&nbsp</div>';
     return '<div style="width:16px;height:16px;background:' + background
       + ';color:white;margin: 0 auto;text-align:center;border-radius: 4px;padding-top: 2px;" ' +
