@@ -28,6 +28,8 @@ class ApiClient implements AugmentedObject
     // cache for price list
     protected $priceCache;
 
+    protected $testMode = false;
+
     public function __construct(Credentials $credentials, XmlReader $xmlReader, HttpReader $httpReader)
     {
         $this->apiEntry = 'https://www.innocigs.com/xmlapi/api.php';
@@ -69,13 +71,15 @@ class ApiClient implements AugmentedObject
     // note: we currently support one dropship order per request (the InnoCigs API supports a list of dropship)
     public function sendOrder($xmlRequest)
     {
-//        return [
-//            'orderNumber'       => '20015',
-//            'message'           => 'Dropship erfolgreich übertragen',
-//            'status'            => 'OK',
-//            'dropshipId'        => '12345',
-//            'supplierOrderId'   => '6789',
-//        ];
+        if ($this->testMode == true) {
+            return [
+                'orderNumber'       => '20015',
+                'message'           => 'Dropship erfolgreich übertragen',
+                'status'            => 'OK',
+                'dropshipId'        => '12345',
+                'supplierOrderId'   => '6789',
+            ];
+        }
         $cmd = $this->authUrl . '&command=dropship&xml=' . urlencode($xmlRequest);
         $data = $this->httpReader->readXml($cmd);
         $data = $data['DROPSHIPPING']['DROPSHIP'];
@@ -95,67 +99,69 @@ class ApiClient implements AugmentedObject
     // date string format Y-m-d
     public function getTrackingData(string $date)
     {
-        $xml = '
-            <INNOCIGS_API_RESPONSE>
-                <TRACKING>
-                    <DROPSHIP>
-                        <DROPSHIP_ID>112</DROPSHIP_ID>
-                        <ORDERS_NUMBER>20206</ORDERS_NUMBER>
-                        <TRACKINGS>
-                            <TRACKINGINFO>
+        if ($this->testMode == true) {
+            $xml = '
+                <INNOCIGS_API_RESPONSE>
+                    <TRACKING>
+                        <DROPSHIP>
+                            <DROPSHIP_ID>112</DROPSHIP_ID>
+                            <ORDERS_NUMBER>20208</ORDERS_NUMBER>
+                            <TRACKINGS>
+                                <TRACKINGINFO>
+                                    <CARRIER>DHL</CARRIER>
+                                    <CODE>TR000001</CODE>
+                                    <RECEIVER>
+                                        <COMPANY>Musterfirma</COMPANY>
+                                        <COMPANY2 />
+                                        <FIRSTNAME>Hans</FIRSTNAME>
+                                        <LASTNAME>Muster</LASTNAME>
+                                        <STREET_ADDRESS>Musterweg 99</STREET_ADDRESS>
+                                        <POSTCODE>22761</POSTCODE>
+                                        <CITY>Hamburg</CITY>
+                                        <COUNTRY_CODE>DE</COUNTRY_CODE>
+                                    </RECEIVER>
+                                </TRACKINGINFO>
+                            </TRACKINGS>
+                        </DROPSHIP>
+                        <DROPSHIP>
+                            <DROPSHIP_ID>113</DROPSHIP_ID>
+                            <ORDERS_NUMBER>001235</ORDERS_NUMBER>
+                            <TRACKINGS>
+                                <TRACKINGINFO>
                                 <CARRIER>DHL</CARRIER>
-                                <CODE>TR000001</CODE>
+                                <CODE>TR000002</CODE>
                                 <RECEIVER>
-                                    <COMPANY>Musterfirma</COMPANY>
+                                    <COMPANY />
                                     <COMPANY2 />
-                                    <FIRSTNAME>Hans</FIRSTNAME>
+                                    <FIRSTNAME>Karl</FIRSTNAME>
                                     <LASTNAME>Muster</LASTNAME>
-                                    <STREET_ADDRESS>Musterweg 99</STREET_ADDRESS>
-                                    <POSTCODE>22761</POSTCODE>
-                                    <CITY>Hamburg</CITY>
+                                    <STREET_ADDRESS>Musterstr. 12</STREET_ADDRESS>
+                                    <POSTCODE>24103</POSTCODE>
+                                    <CITY>Kiel</CITY>
                                     <COUNTRY_CODE>DE</COUNTRY_CODE>
                                 </RECEIVER>
                             </TRACKINGINFO>
                         </TRACKINGS>
                     </DROPSHIP>
+                </TRACKING>
+                <CANCELLATION>
                     <DROPSHIP>
-                        <DROPSHIP_ID>113</DROPSHIP_ID>
-                        <ORDERS_NUMBER>001235</ORDERS_NUMBER>
-                        <TRACKINGS>
-                            <TRACKINGINFO>
-                            <CARRIER>DHL</CARRIER>
-                            <CODE>TR000002</CODE>
-                            <RECEIVER>
-                                <COMPANY />
-                                <COMPANY2 />
-                                <FIRSTNAME>Karl</FIRSTNAME>
-                                <LASTNAME>Muster</LASTNAME>
-                                <STREET_ADDRESS>Musterstr. 12</STREET_ADDRESS>
-                                <POSTCODE>24103</POSTCODE>
-                                <CITY>Kiel</CITY>
-                                <COUNTRY_CODE>DE</COUNTRY_CODE>
-                            </RECEIVER>
-                        </TRACKINGINFO>
-                    </TRACKINGS>
-                </DROPSHIP>
-            </TRACKING>
-            <CANCELLATION>
-                <DROPSHIP>
-                    <DROPSHIP_ID>114</DROPSHIP_ID>
-                    <ORDERS_NUMBER>001236</ORDERS_NUMBER>
-                    <MESSAGE>Der Auftrag wurde storniert</MESSAGE>
-                </DROPSHIP>
-                <DROPSHIP>
-                    <DROPSHIP_ID>115</DROPSHIP_ID>
-                    <ORDERS_NUMBER>20120</ORDERS_NUMBER>
-                    <MESSAGE>Der Auftrag wurde storniert</MESSAGE>
-                </DROPSHIP>
-            </CANCELLATION>
-        </INNOCIGS_API_RESPONSE>';
+                        <DROPSHIP_ID>114</DROPSHIP_ID>
+                        <ORDERS_NUMBER>001236</ORDERS_NUMBER>
+                        <MESSAGE>Der Auftrag wurde storniert</MESSAGE>
+                    </DROPSHIP>
+                    <DROPSHIP>
+                        <DROPSHIP_ID>115</DROPSHIP_ID>
+                        <ORDERS_NUMBER>20120</ORDERS_NUMBER>
+                        <MESSAGE>Der Auftrag wurde storniert</MESSAGE>
+                    </DROPSHIP>
+                </CANCELLATION>
+            </INNOCIGS_API_RESPONSE>';
+            return $this->httpReader->readXml2($xml);
+        }
 
         $cmd = $this->authUrl . '&command=tracking&day=' . $date;
         return $this->httpReader->readXml($cmd);
-//        return $this->httpReader->readXml2($xml);
     }
 
     protected function getPriceData(array $data)
