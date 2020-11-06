@@ -2,7 +2,6 @@
 
 namespace MxcDropshipInnocigs\Article;
 
-use Enlight_Components_Db_Adapter_Pdo_Mysql;
 use MxcCommons\Plugin\Service\DatabaseAwareTrait;
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\Plugin\Service\ModelManagerAwareTrait;

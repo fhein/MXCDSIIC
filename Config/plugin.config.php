@@ -12,7 +12,6 @@ use MxcDropshipInnocigs\Api\ApiClient;
 use MxcDropshipInnocigs\Article\ArticleRegistry;
 use MxcDropshipInnocigs\Api\Credentials;
 use MxcDropshipInnocigs\Order\DropshipOrder;
-use MxcDropshipInnocigs\Companion\DropshippersCompanion;
 use MxcDropshipInnocigs\Order\OrderProcessor;
 use MxcDropshipInnocigs\Api\Xml\HttpReader;
 use MxcDropshipInnocigs\Api\Xml\ResponseToArray;
@@ -54,7 +53,6 @@ return [
             ArticleRegistry::class,
             ApiClient::class,
             Credentials::class,
-            DropshippersCompanion::class,
             OrderProcessor::class,
             DropshipStatus::class,
             HttpReader::class,
@@ -70,7 +68,6 @@ return [
             'ArticleRegistry'           => ArticleRegistry::class,
             'ApiClient'                 => ApiClient::class,
             'OrderProcessor'            => OrderProcessor::class,
-            'DropshippersCompanion'     => DropshippersCompanion::class,
         ]
     ],
 ];

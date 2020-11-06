@@ -4,8 +4,6 @@ namespace MxcDropshipInnocigs\Order;
 
 use MxcCommons\Interop\Container\ContainerInterface;
 use MxcCommons\ServiceManager\Factory\FactoryInterface;
-use MxcDropship\Dropship\DropshipLogger;
-use MxcDropship\MxcDropship;
 use MxcDropshipInnocigs\Api\ApiClient;
 
 class OrderProcessorFactory implements FactoryInterface

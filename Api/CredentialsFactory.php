@@ -2,9 +2,7 @@
 
 namespace MxcDropshipInnocigs\Api;
 
-use Doctrine\DBAL\Connection;
 use MxcCommons\Interop\Container\ContainerInterface;
-use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use MxcCommons\ServiceManager\Exception\ServiceNotCreatedException;
 use MxcCommons\ServiceManager\Factory\FactoryInterface;
 

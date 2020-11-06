@@ -3,13 +3,10 @@
 namespace MxcDropshipInnocigs\Order;
 
 use MxcCommons\Plugin\Service\DatabaseAwareTrait;
-use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropship\Dropship\DropshipManager;
-use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\Api\ApiClient;
 use DateTime;
-use MxcDropshipInnocigs\Exception\ApiException;
 use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use Throwable;
 

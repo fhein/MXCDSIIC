@@ -2,7 +2,6 @@
 
 namespace MxcDropshipInnocigs\Api;
 
-use DateTime;
 use MxcCommons\Plugin\Service\LoggerAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropshipInnocigs\Api\Xml\HttpReader;

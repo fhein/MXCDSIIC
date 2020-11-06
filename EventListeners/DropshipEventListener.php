@@ -6,17 +6,12 @@ use MxcCommons\EventManager\EventInterface;
 use MxcCommons\EventManager\EventManagerInterface;
 use MxcCommons\EventManager\ListenerAggregateInterface;
 use MxcCommons\EventManager\ListenerAggregateTrait;
-use MxcCommons\EventManager\SharedEventManagerInterface;
 use MxcCommons\Plugin\Service\ServicesAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
-use MxcDropship\Dropship\DropshipManager;
 use MxcDropshipInnocigs\Jobs\UpdatePrices;
 use MxcDropshipInnocigs\Jobs\UpdateStock;
-use MxcDropshipInnocigs\MxcDropshipInnocigs;
 use MxcDropshipInnocigs\Order\OrderProcessor;
 use MxcDropshipInnocigs\Order\TrackingDataProcessor;
-use Shopware\Models\Order\Order;
-use Throwable;
 
 class DropshipEventListener implements AugmentedObject, ListenerAggregateInterface
 {

@@ -4,10 +4,8 @@ namespace MxcDropshipInnocigs\Order;
 
 use MxcCommons\Interop\Container\ContainerInterface;
 use MxcCommons\ServiceManager\Factory\FactoryInterface;
-use MxcDropship\Dropship\DropshipLogger;
 use MxcDropship\Dropship\DropshipManager;
 use MxcDropship\MxcDropship;
-use MxcDropshipInnocigs\Api\ApiClient;
 
 class DropshipStatusFactory implements FactoryInterface
 {

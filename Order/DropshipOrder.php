@@ -2,8 +2,6 @@
 
 namespace MxcDropshipInnocigs\Order;
 
-use MxcCommons\Plugin\Service\ClassConfigAwareTrait;
-use MxcCommons\ServiceManager\AugmentedObject;
 use SimpleXMLElement;
 
 // This class is used by OrderProcessor to create the XML Request for ApiClient->sendOrder

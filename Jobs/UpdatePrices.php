@@ -9,10 +9,7 @@ use MxcCommons\ServiceManager\AugmentedObject;
 use MxcCommons\Toolbox\Shopware\TaxTool;
 use MxcDropship\Dropship\DropshipManager;
 use MxcDropshipInnocigs\Api\ApiClient;
-use MxcDropshipInnocigs\Companion\DropshippersCompanion;
-use MxcDropshipInnocigs\Exception\ApiException;
 use MxcDropshipInnocigs\MxcDropshipInnocigs;
-use MxcDropshipInnocigs\Order\DropshipStatus;
 use MxcDropshipIntegrator\Models\Variant;
 use Throwable;
 
@@ -28,8 +25,6 @@ class UpdatePrices implements AugmentedObject
 
     protected $apiClient;
 
-    protected $companion;
-
     /** @var DropshipManager */
     protected $dropshipManager;
 
@@ -41,10 +36,9 @@ class UpdatePrices implements AugmentedObject
 
     protected $supplier;
 
-    public function __construct(ApiClient $apiClient, DropshippersCompanion $companion, DropshipManager $dropshipManager)
+    public function __construct(ApiClient $apiClient, DropshipManager $dropshipManager)
     {
         $this->apiClient = $apiClient;
-        $this->companion = $companion;
         $this->dropshipManager = $dropshipManager;
         $this->supplier = MxcDropshipInnocigs::getModule()->getName();
         $this->vatFactor = 1 + TaxTool::getCurrentVatPercentage() / 100;
@@ -64,7 +58,7 @@ class UpdatePrices implements AugmentedObject
         try {
             // throw new \RuntimeException('Some error.');
             $modelPrices = $this->apiClient->getPrices();
-            $detailPrices = $this->companion->validate() ? $this->companion->getDetailPrices() : $this->getDetailPrices();
+            $detailPrices = $this->getDetailPrices();
             $changes = false;
             foreach ($detailPrices as $number => $detailPrice) {
                 // if we still have a product that InnoCigs removed already we do not have a model price
@@ -97,7 +91,6 @@ class UpdatePrices implements AugmentedObject
 
     protected function getDetailPrices()
     {
-        $this->log->debug('Companion not called.');
         $sql = '
             SELECT 
                 d.id,
@@ -137,25 +130,6 @@ class UpdatePrices implements AugmentedObject
             [ 'id' => $detailId,
               'purchasePrice' => $purchasePrice,
               'retailPrice' => $retailPrice / $this->vatFactor,
-            ]
-        );
-
-        if (! $this->companion->validate()) return;
-
-        // update Dropshipper's Companion info also
-        $sql = '
-            UPDATE s_articles_attributes a
-            SET
-                a.dc_ic_purchasing_price = :purchasePrice,
-                a.dc_ic_retail_price = :retailPrice
-            WHERE 
-                a.articledetailsID = :id
-        ';
-        $this->db->query(
-            $sql,
-            [ 'id' => $detailId,
-              'purchasePrice' => $purchasePrice,
-              'retailPrice' => $retailPrice
             ]
         );
     }

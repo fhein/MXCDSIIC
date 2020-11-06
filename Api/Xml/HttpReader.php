@@ -3,7 +3,6 @@
 namespace MxcDropshipInnocigs\Api\Xml;
 
 use MxcCommons\Http\Client;
-use MxcCommons\Http\Exception\RuntimeException as ZendClientException;
 use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\Exception\ApiException;
 use DOMDocument;

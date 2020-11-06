@@ -5,9 +5,7 @@ namespace MxcDropshipInnocigs\Order;
 use MxcCommons\Plugin\Service\DatabaseAwareTrait;
 use MxcCommons\ServiceManager\AugmentedObject;
 use MxcDropship\Dropship\DropshipManager;
-use MxcDropship\Exception\DropshipException;
 use MxcDropshipInnocigs\MxcDropshipInnocigs;
-use Throwable;
 
 // To avoid code duplication this class provides two functions
 // which are used by both OrderProcessor and TrackingDataProcessor
