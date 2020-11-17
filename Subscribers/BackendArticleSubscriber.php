@@ -19,11 +19,11 @@ class BackendArticleSubscriber implements SubscriberInterface
             'text'  => 'Dropship und eigenes Lager, eigenes Lager bevorzugt',
         ],
         DropshipManager::MODE_PREFER_DROPSHIP => [
-            'color' => 'CornFlowerBlue',
+            'color' => 'DeepSkyBlue',
             'text'  => 'Dropship und eigenes Lager, Dropship bevorzugt',
         ],
         DropshipManager::MODE_DROPSHIP_ONLY => [
-            'color' => 'DarkSeaGreen',
+            'color' => 'CornFlowerBlue',
             'text'  => 'Lieferung ausschließlich per Dropship',
         ]
     ];
@@ -39,9 +39,6 @@ class BackendArticleSubscriber implements SubscriberInterface
         $this->log = $this->services->get('logger');
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public static function getSubscribedEvents()
     {
         return [
@@ -50,11 +47,6 @@ class BackendArticleSubscriber implements SubscriberInterface
         ];
     }
 
-    /**
-     * Overwrite and manage the backend extjs-resources
-     *
-     * @param Enlight_Event_EventArgs $args
-     */
     public function onBackendArticlePostDispatch(Enlight_Event_EventArgs $args)
     {
         $view = $args->getSubject()->View();
@@ -65,6 +57,14 @@ class BackendArticleSubscriber implements SubscriberInterface
                 return;
             case 'load':
                 $view->extendsTemplate($this->basePath . 'article/view/variant/list.js');
+
+                // $view->extendsTemplate($this->basePath . 'article/model/detail.js.sn');
+                $view->extendsTemplate($this->basePath . 'article/view/detail/window.js');
+                $view->extendsTemplate($this->basePath . 'article/view/detail/base.js');
+
+                $view->extendsTemplate($this->basePath . 'article/view/variant/detail.js');
+                $view->extendsTemplate($this->basePath . 'article/view/variant/list.js');
+
                 break;
             case 'detailList':
                 $articleList = $view->getAssign('data');

@@ -26,7 +26,7 @@ return [
         'attributes' => [
             's_articles_attributes'      => [
                 'mxcbc_dsi_ic_registered'     => ['type' => TypeMapping::TYPE_BOOLEAN],
-                'mxcbc_dsi_ic_status'         => ['type' => TypeMapping::TYPE_INTEGER],
+                'mxcbc_dsi_ic_active'         => ['type' => TypeMapping::TYPE_BOOLEAN],
                 'mxcbc_dsi_ic_productnumber'  => ['type' => TypeMapping::TYPE_STRING],
                 'mxcbc_dsi_ic_productname'    => ['type' => TypeMapping::TYPE_STRING],
                 'mxcbc_dsi_ic_purchaseprice'  => ['type' => TypeMapping::TYPE_FLOAT],

@@ -8,30 +8,12 @@ Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.variant.Detail', {
         let me = this,
             panelTab = me.callParent(arguments);
 
-        me.innocigsFieldSet = Ext.create('Shopware.apps.MxcDsiDropship.innocigs.article.view.detail.Base');
+        me.innocigsFieldSet = Ext.create('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base');
         me.innocigsFieldSet.detailId = me.record.data.id;
         me.innocigsFieldSet.mainWindow = me;
-        me.formPanel.insert(5, me.innocigsFieldSet);
-
-        debugger;
+        me.innocigsFieldSet.onMxcDsiInnocigsSettings({ detailId: me.record.data.id})
+        me.formPanel.insert(2, me.innocigsFieldSet);
         return panelTab;
     },
-
-    onAfterRender: function(me){
-        debugger;
-        me.innocigsFieldSet.detailId = me.record.data.id;
-        me.innocigsFieldSet.mainWindow = me;
-        me.innocigsFieldSet.onMxcDsiInnocigsSettings({ detailId: detailId })
-    }
-
-    // onStoresLoaded: function() {
-    //     let me = this;
-    //     me.callParent(arguments);
-    //     let detailId = me.record.data.id;
-    //     me.innocigsFieldSet.detailId = detailId;
-    //     me.innocigsFieldSet.mainWindow = me;
-    //     me.innocigsFieldSet.onMxcDsiInnocigsSettings({ detailId: detailId })
-    // }
-
 });
 //{/block}

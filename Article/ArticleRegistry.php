@@ -35,9 +35,9 @@ class ArticleRegistry implements AugmentedObject
     // @todo: mxcbc_dsi_mode should be set somewhere else, because it is not Innocigs specific
     private $fields = [
         'mxcbc_dsi_mode'              => null,
-        'mxc_dsi_supplier'            => null,
+        'mxcbc_dsi_supplier'          => null,
         'mxcbc_dsi_ic_registered'     => false,
-        'mxcbc_dsi_ic_status'         => null,
+        'mxcbc_dsi_ic_active'         => false,
         'mxcbc_dsi_ic_productnumber'  => null,
         'mxcbc_dsi_ic_productname'    => null,
         'mxcbc_dsi_ic_purchaseprice'  => null,
@@ -59,8 +59,12 @@ class ArticleRegistry implements AugmentedObject
         $this->select = implode(', ', array_keys($this->fields));
     }
 
-    public function configureDropship(Variant $variant, int $stockInfo, int $deliveryMode = DropshipManager::MODE_DROPSHIP_ONLY)
-    {
+    public function configureDropship(
+        Variant $variant,
+        int $stockInfo,
+        bool $active = true,
+        int $deliveryMode = DropshipManager::MODE_DROPSHIP_ONLY
+    ) {
         $detail = $variant->getDetail();
         if (! $detail) return;
 
@@ -72,7 +76,7 @@ class ArticleRegistry implements AugmentedObject
             'mxcbc_dsi_ic_instock'        => $stockInfo,
             'mxcbc_dsi_mode'              => $deliveryMode,
             'mxcbc_dsi_supplier'          => $this->supplier,
-            'mxcbc_dsi_ic_status'         => ArticleRegistry::NO_ERROR,
+            'mxcbc_dsi_ic_active'         => $active,
             'mxcbc_dsi_ic_registered'     => true,
         ];
         $this->updateSettings($detail->getId(), $data);
@@ -100,7 +104,6 @@ class ArticleRegistry implements AugmentedObject
             'mxcbc_dsi_ic_purchaseprice'  => StringTool::toFloat($info['purchasePrice']),
             'mxcbc_dsi_ic_retailprice'    => StringTool::toFloat($info['recommendedRetailPrice']),
             'mxcbc_dsi_ic_instock'        => $this->client->getStockInfo($productNumber),
-            'mxcbc_dsi_ic_status'         => self::NO_ERROR,
             'mxcbc_dsi_supplier'          => $this->supplier,
             'mxcbc_dsi_ic_registered'     => true,
             // should be moved to MxcDropship context, because it is not Innocigs specific

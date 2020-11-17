@@ -1,13 +1,13 @@
 //{block name="backend/article/view/detail/window"}
 //{$smarty.block.parent}
-Ext.define('Shopware.apps.MxdDropshipInnocigs.article.view.detail.Window', {
+Ext.define('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Window', {
     override: 'Shopware.apps.Article.view.detail.Window',
 
     createBaseTab: function() {
         let me = this;
         let panelTab = me.callParent(arguments);
-        me.innocigsFieldSet = Ext.create('Shopware.apps.MxcDsiDropship.innocigs.article.view.detail.Base');
-        me.detailForm.insert(6, me.innocigsFieldSet);
+        me.innocigsFieldSet = Ext.create('Shopware.apps.MxcDropshipInnocigs.article.view.detail.Base');
+        me.detailForm.insert(1, me.innocigsFieldSet);
         return panelTab;
     },
 
