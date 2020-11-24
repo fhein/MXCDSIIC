@@ -56,6 +56,7 @@ class UpdateStock implements AugmentedObject
                 $swDetail = $repository->find($detailId);
                 $swDetail->setInStock($instock);
                 ArticleTool::setDetailAttribute($detailId, 'mxcbc_dsi_ic_instock', intval($instock));
+                // @todo: Next line suspicious if more than one dropship module is installed
                 ArticleTool::setDetailAttribute($detailId, 'mxcbc_dsi_supplier', $this->supplier);
             }
             $this->modelManager->flush();

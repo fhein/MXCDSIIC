@@ -104,6 +104,7 @@ class ArticleRegistry implements AugmentedObject
             'mxcbc_dsi_ic_purchaseprice'  => StringTool::toFloat($info['purchasePrice']),
             'mxcbc_dsi_ic_retailprice'    => StringTool::toFloat($info['recommendedRetailPrice']),
             'mxcbc_dsi_ic_instock'        => $this->client->getStockInfo($productNumber),
+            'mxcbc_dsi_ic_active'         => true,
             'mxcbc_dsi_supplier'          => $this->supplier,
             'mxcbc_dsi_ic_registered'     => true,
             // should be moved to MxcDropship context, because it is not Innocigs specific
