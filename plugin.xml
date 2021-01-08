@@ -16,7 +16,6 @@
         <changes lang="en">Initial release;</changes>
     </changelog>
     <requiredPlugins>
-        <requiredPlugin pluginName="MxcCommons" minVersion="1.0.0" maxVersion="1.0.0"/>
         <requiredPlugin pluginName="MxcDropship" minVersion="1.0.0" maxVersion="1.0.0"/>
     </requiredPlugins>
 </plugin>
