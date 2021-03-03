@@ -90,7 +90,11 @@ class BackendOrderSubscriber implements SubscriberInterface
         $status = $attr['mxcbc_dsi_ic_status'];
         $message = $attr['mxcbc_dsi_ic_message'];
         $paymentStatus = $order['cleared'];
-        if ($paymentStatus == Status::PAYMENT_STATE_COMPLETELY_PAID && $status == DropshipManager::DROPSHIP_STATUS_OPEN) {
+        $paymentSufficient =
+            $paymentStatus == Status::PAYMENT_STATE_PARTIALLY_INVOICED // Klarna
+            || $paymentStatus == Status::PAYMENT_STATE_COMPLETELY_PAID;
+
+        if ($paymentSufficient && $status == DropshipManager::DROPSHIP_STATUS_OPEN) {
             return $panels['DROPSHIP_SCHEDULED'];
         }
         $panel = $panels[$status];

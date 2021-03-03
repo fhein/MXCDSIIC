@@ -51,8 +51,10 @@ class Shopware_Controllers_Backend_MxcDropshipInnocigs extends Shopware_Controll
         $status = $attr['dropshipStatus'];
         $paymentStatus = $attr['paymentStatus'];
         $message = null;
+        $paymentAccepted = $paymentStatus == Status::PAYMENT_STATE_COMPLETELY_PAID
+            || $paymentStatus = Status::PAYMENT_STATE_PARTIALLY_INVOICED;
 
-        if ($status == DropshipManager::DROPSHIP_STATUS_OPEN && $paymentStatus == Status::PAYMENT_STATE_COMPLETELY_PAID) {
+        if ($paymentAccepted && $status == DropshipManager::DROPSHIP_STATUS_OPEN) {
             $status = 'DROPSHIP_SCHEDULED';
         } else {
             $message = $attr['message'];
