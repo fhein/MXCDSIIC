@@ -215,6 +215,27 @@ class ApiClient implements AugmentedObject
         return $stockInfo;
     }
 
+    public function getShippingStatus(string $model = null)
+    {
+        if ($model === null) return $this->getAllShippingStatus();
+
+        $cmd = $this->authUrl . '&command=quantity&model=' . urlencode($model);
+        $data = $this->httpReader->readXml($cmd);
+        return $data['QUANTITIES']['PRODUCT']['SHIPPING_STATUS'];
+    }
+
+    protected function getAllShippingStatus()
+    {
+        $cmd = $this->authUrl . '&command=quantity_all';
+        $data = $this->httpReader->readXml($cmd);
+
+        $shippingStatus = [];
+        foreach ($data['QUANTITIES']['PRODUCT'] as $record) {
+            $shippingStatus[$record['PRODUCTS_MODEL']] = $record['SHIPPING_STATUS'];
+        }
+        return $shippingStatus;
+    }
+
     public function getXmlReader()
     {
         return $this->xmlReader;
